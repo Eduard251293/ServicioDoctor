@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EcoSalud — Panel del Doctor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ── Variables ─────────────────────────────────────────── */
+:root {
+  --bg:        #f0f7fb;
+  --surface:   #ffffff;
+  --surface2:  #e8f4f9;
+  --border:    #c5dfed;
+  --teal:      #1a8fc1;
+  --teal-dim:  #1272a0;
+  --teal-glow: rgba(26,143,193,.12);
+  --red:       #e05252;
+  --amber:     #d4861a;
+  --blue:      #2176ae;
+  --text:      #1a2e3b;
+  --muted:     #6a90a8;
+  --radius:    12px;
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ── Sidebar ───────────────────────────────────────────── */
+.sidebar{
+  position:fixed;top:0;left:0;width:260px;height:100vh;
+  background:#1272a0;border-right:1px solid #0f5a87;
+  display:flex;flex-direction:column;z-index:100;
+}
+.sidebar-logo{
+  padding:28px 24px 20px;
+  border-bottom:1px solid var(--border);
+}
+.logo-title{
+  font-family:'DM Serif Display',serif;font-size:22px;color:var(--teal);letter-spacing:-.3px;
+}
+.logo-sub{font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
+
+.sidebar-doctor{
+  padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;gap:12px;
+}
+.avatar{
+  width:42px;height:42px;border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),var(--teal-dim));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Serif Display',serif;font-size:18px;color:#fff;flex-shrink:0;
+}
+.doctor-info{flex:1;min-width:0}
+.doctor-name{font-size:13px;font-weight:600;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doctor-id-label{font-size:11px;color:rgba(255,255,255,.6)}
+.doctor-id-input{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;
+  margin-top:4px;font-family:'DM Sans',sans-serif;
+}
+.doctor-id-input:focus{outline:none;border-color:var(--teal)}
+
+.nav{flex:1;padding:16px 12px;overflow-y:auto}
+.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.45);padding:8px 12px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:8px;cursor:pointer;
+  font-size:13px;font-weight:500;transition:all .2s;margin-bottom:2px;
+  color:rgba(255,255,255,.75);border:none;background:none;width:100%;text-align:left;
+}
+.nav-item:hover{background:rgba(255,255,255,.15);color:#ffffff}
+.nav-item.active{background:rgba(255,255,255,.2);color:#ffffff;border-left:3px solid #ffffff;padding-left:9px}
+.nav-item .icon{font-size:16px;width:20px;text-align:center}
+.badge{
+  margin-left:auto;background:var(--teal);color:#fff;
+  font-size:10px;padding:2px 6px;border-radius:20px;font-weight:600;
+}
+
+/* ── Main ──────────────────────────────────────────────── */
+.main{margin-left:260px;min-height:100vh;padding:32px}
+
+/* ── Header ────────────────────────────────────────────── */
+.page-header{margin-bottom:32px}
+.page-title{font-family:'DM Serif Display',serif;font-size:32px;color:var(--text)}
+.page-sub{font-size:14px;color:var(--muted);margin-top:4px}
+.breadcrumb{font-size:12px;color:var(--muted);margin-bottom:12px}
+.breadcrumb span{color:var(--teal)}
+
+/* ── Cards ─────────────────────────────────────────────── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;margin-bottom:24px;
+}
+.card-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);
+}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px}
+.card-badge{
+  font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;
+  background:var(--teal-glow);color:var(--teal);border:1px solid var(--teal-dim);
+}
+
+/* ── Form ──────────────────────────────────────────────── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-grid.cols-1{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.span-2{grid-column:span 2}
+.form-group.span-3{grid-column:span 3}
+label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;color:var(--text);
+  font-size:14px;font-family:'DM Sans',sans-serif;
+  transition:border-color .2s;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-glow)}
+textarea{resize:vertical;min-height:80px}
+select option{background:var(--surface2)}
+
+/* ── Buttons ───────────────────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;
+  cursor:pointer;border:none;transition:all .2s;font-family:'DM Sans',sans-serif;
+}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{background:var(--teal-dim);transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal)}
+.btn-danger{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+
+/* ── Result Panel ──────────────────────────────────────── */
+.result-panel{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:16px;margin-top:16px;
+  font-size:13px;line-height:1.6;min-height:60px;
+}
+.result-panel.success{border-color:var(--teal);background:var(--teal-glow)}
+.result-panel.error{border-color:var(--red);background:rgba(231,76,60,.08)}
+.result-panel.loading{color:var(--muted);font-style:italic}
+
+/* ── Tables ────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--surface2)}
+th{padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600}
+td{padding:12px 14px;border-top:1px solid var(--border)}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ── Status badges ─────────────────────────────────────── */
+.status{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.status-leve{background:rgba(52,152,219,.15);color:var(--blue)}
+.status-moderado{background:rgba(243,156,18,.15);color:var(--amber)}
+.status-grave{background:rgba(231,76,60,.15);color:var(--red)}
+.status-critico{background:rgba(231,76,60,.3);color:#ff6b6b}
+.status-emitida{background:var(--teal-glow);color:var(--teal)}
+.status-vigente{background:var(--teal-glow);color:var(--teal)}
+.status-caducado{background:rgba(231,76,60,.15);color:var(--red)}
+.status-entregado{background:rgba(52,152,219,.15);color:var(--blue)}
+.status-agendada{
+  background: rgba(46, 204, 113, .15);
+  color: #27ae60;
+}
+
+/* ── Tabs ──────────────────────────────────────────────── */
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border);width:fit-content}
+.tab{padding:8px 18px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);border:none;background:none;transition:all .2s}
+.tab.active{background:var(--teal);color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ── Stat cards ────────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:0 2px 12px rgba(26,143,193,.08)}
+.stat-number{font-family:'DM Serif Display',serif;font-size:36px;color:var(--teal)}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ── Sections ──────────────────────────────────────────── */
+.section{display:none}
+.section.active{display:block}
+
+/* ── Info box ──────────────────────────────────────────── */
+.info-box{
+  background:var(--teal-glow);border:1px solid var(--teal-dim);
+  border-radius:8px;padding:12px 16px;font-size:13px;color:var(--text);
+  margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;
+}
+.info-box .icon{font-size:16px;margin-top:1px;flex-shrink:0}
+
+/* ── Spinner ───────────────────────────────────────────── */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#1272a0}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Toast ─────────────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:14px 18px;font-size:13px;
+  transform:translateY(100px);opacity:0;transition:all .3s;
+  max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:var(--teal);background:var(--teal-glow)}
+.toast.error{border-color:var(--red);background:rgba(231,76,60,.1)}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative}
+  .main{margin-left:0;padding:16px}
+  .form-grid{grid-template-columns:1fr}
+  .form-group.span-2,.form-group.span-3{grid-column:span 1}
+  .stats-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────── -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-title">🏥 EcoSalud</div>
+    <div class="logo-sub">Ecosistema de Salud Conectado</div>
+  </div>
+
+  <div class="sidebar-doctor">
+    <div class="avatar" id="avatarLetter">D</div>
+    <div class="doctor-info">
+      <div class="doctor-name">Panel del Doctor</div>
+      <div class="doctor-id-label">Tu ID de Doctor</div>
+      <input type="number" class="doctor-id-input" id="globalDoctorId" value="1" min="1" placeholder="ID Doctor" oninput="updateAvatar()"/>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Actos Médicos</div>
+    <button class="nav-item active" onclick="showSection('diagnostico')">
+      <span class="icon">🩺</span> Emitir Diagnóstico
+    </button>
+    <button class="nav-item" onclick="showSection('orden')">
+      <span class="icon">📋</span> Orden Médica
+    </button>
+    <button class="nav-item" onclick="showSection('receta')">
+      <span class="icon">💊</span> Emitir Receta
+    </button>
+
+    <div class="nav-section" style="margin-top:8px">Consultas</div>
+    <button class="nav-item" onclick="showSection('pacientes')">
+      <span class="icon">👥</span> Pacientes Atendidos
+    </button>
+    <button class="nav-item" onclick="showSection('consulta')">
+      <span class="icon">🔍</span> Consultar Paciente
+    </button>
+    <button class="nav-item" onclick="showSection('recetas-view')">
+      <span class="icon">📄</span> Ver Recetas
+    </button>
+    <button class="nav-item" onclick="showSection('citas')">
+      <span class="icon">📅</span> Ver Citas
+    </button>
+
+    <div class="nav-section" style="margin-top:8px">Sistema</div>
+    <button class="nav-item" onclick="showSection('config')">
+      <span class="icon">⚙️</span> Configuración API
+    </button>
+  </nav>
+</div>
+
+<!-- ── Main ────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  1. EMITIR DIAGNÓSTICO                             -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section active" id="sec-diagnostico">
+    <div class="page-header">
+      <div class="breadcrumb">Doctor <span>›</span> Actos Médicos</div>
+      <div class="page-title">Emitir Diagnóstico</div>
+      <div class="page-sub">POST /doctor/diagnostico — Registra un diagnóstico para un paciente</div>
+    </div>
+
+    <div class="info-box">
+      <span class="icon">ℹ️</span>
+      Incluye el código CIE-10 del diagnóstico. Ejemplos: <strong>I10</strong> = Hipertensión, <strong>J06.9</strong> = Gripe, <strong>E11</strong> = Diabetes tipo 2.
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Nuevo Diagnóstico</div>
+        <div class="card-badge">POST /doctor/diagnostico</div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>ID del Doctor</label>
+          <input type="number" id="dx-doctor-id" placeholder="Ej: 1" value="1" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>ID del Paciente</label>
+          <input type="number" id="dx-paciente-id" placeholder="Ej: 1" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>Código CIE-10</label>          
+          <select id="dx-cie">
+            <option value="I10">Hipertensión</option>
+            <option value="J06.9">Gripe</option>
+            <option value="E11">Diabetes tipo 2</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Gravedad</label>
+          <select id="dx-gravedad">
+            <option value="LEVE">🟢 LEVE</option>
+            <option value="MODERADO">🟡 MODERADO</option>
+            <option value="GRAVE">🔴 GRAVE</option>
+            <option value="CRITICO">⚫ CRÍTICO</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label>Nombre del Diagnóstico *</label>
+          <input type="text" id="dx-nombre" placeholder="Ej: Hipertensión arterial esencial"/>
+        </div>
+        <div class="form-group span-2">
+          <label>Descripción / Observaciones</label>
+          <textarea id="dx-descripcion" placeholder="Descripción clínica detallada del diagnóstico..."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px;align-items:center">
+        <button class="btn btn-primary" onclick="emitirDiagnostico()" id="btn-dx">
+          🩺 Emitir Diagnóstico
+        </button>
+        <button class="btn btn-secondary" onclick="limpiarForm('dx')">Limpiar</button>
+      </div>
+
+      <div class="result-panel loading" id="result-dx">Completa el formulario y presiona "Emitir Diagnóstico".</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  2. ORDEN MÉDICA                                    -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-orden">
+    <div class="page-header">
+      <div class="breadcrumb">Doctor <span>›</span> Actos Médicos</div>
+      <div class="page-title">Generar Orden Médica</div>
+      <div class="page-sub">POST /doctor/orden-medica — Genera exámenes, interconsultas o procedimientos</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Nueva Orden Médica</div>
+        <div class="card-badge">POST /doctor/orden-medica</div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>ID del Doctor</label>
+          <input type="number" id="om-doctor-id" placeholder="Ej: 1" value="1" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>ID del Paciente</label>
+          <input type="number" id="om-paciente-id" placeholder="Ej: 1" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Orden</label>
+          <select id="om-tipo">
+            <option value="LABORATORIO">🧪 LABORATORIO</option>
+            <option value="IMAGENOLOGIA">🔬 IMAGENOLOGÍA</option>
+            <option value="ESPECIALISTA">👨‍⚕️ ESPECIALISTA</option>
+            <option value="PROCEDIMIENTO">🏥 PROCEDIMIENTO</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha de Vencimiento</label>
+          <input type="date" id="om-vencimiento"/>
+        </div>
+        <div class="form-group span-2">
+          <label>Detalle de la Orden *</label>
+          <textarea id="om-detalle" placeholder="Ej: Hemograma completo + perfil lipídico + glucosa en ayunas..."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px">
+        <button class="btn btn-primary" onclick="generarOrden()" id="btn-om">
+          📋 Generar Orden
+        </button>
+        <button class="btn btn-secondary" onclick="limpiarForm('om')">Limpiar</button>
+      </div>
+
+      <div class="result-panel loading" id="result-om">Completa el formulario y presiona "Generar Orden".</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  3. EMITIR RECETA                                   -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-receta">
+    <div class="page-header">
+      <div class="breadcrumb">Doctor <span>›</span> Actos Médicos</div>
+      <div class="page-title">Emitir Receta Médica</div>
+      <div class="page-sub">POST /doctor/receta — Prescribe medicamentos al paciente</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Nueva Receta</div>
+        <div class="card-badge">POST /doctor/receta</div>
+      </div>
+
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label>ID del Doctor</label>
+          <input type="number" id="rx-doctor-id" placeholder="Ej: 1" value="1" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>ID del Paciente</label>
+          <input type="number" id="rx-paciente-id" placeholder="Ej: 1" min="1"/>
+        </div>
+        <div class="form-group">
+          <label>ID Orden Médica (opcional)</label>
+          <input type="number" id="rx-orden-id" placeholder="Dejar vacío si no aplica"/>
+        </div>
+        <div class="form-group span-3">
+          <label>Medicamento *</label>
+          <input type="text" id="rx-medicamento" placeholder="Ej: Amoxicilina 500mg cápsulas"/>
+        </div>
+        <div class="form-group">
+          <label>Dosis</label>
+          <input type="text" id="rx-dosis" placeholder="Ej: 500mg"/>
+        </div>
+        <div class="form-group">
+          <label>Duración del Tratamiento</label>
+          <input type="text" id="rx-duracion" placeholder="Ej: 7 días"/>
+        </div>
+        <div class="form-group">
+          <label>Fecha de Vencimiento</label>
+          <input type="date" id="rx-vencimiento"/>
+        </div>
+        <div class="form-group span-3">
+          <label>Indicaciones</label>
+          <textarea id="rx-indicaciones" placeholder="Ej: Tomar cada 8 horas después de las comidas. No suspender el tratamiento antes de completar los 7 días."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px">
+        <button class="btn btn-primary" onclick="emitirReceta()" id="btn-rx">
+          💊 Emitir Receta
+        </button>
+        <button class="btn btn-secondary" onclick="limpiarForm('rx')">Limpiar</button>
+      </div>
+
+      <div class="result-panel loading" id="result-rx">Completa el formulario y presiona "Emitir Receta".</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  4. PACIENTES ATENDIDOS                             -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-pacientes">
+    <div class="page-header">
+      <div class="breadcrumb">Doctor <span>›</span> Consultas</div>
+      <div class="page-title">Pacientes Atendidos</div>
+      <div class="page-sub">GET /doctor/{id}/pacientes-atendidos — Historial de actividad clínica</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Buscar por Doctor</div>
+        <div class="card-badge">GET /doctor/{id}/pacientes-atendidos</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-end">
+        <div class="form-group" style="flex:1;max-width:200px">
+          <label>ID del Doctor</label>
+          <input type="number" id="pa-doctor-id" value="1" min="1"/>
+        </div>
+        <button class="btn btn-primary" onclick="getPacientesAtendidos()" id="btn-pa">
+          🔍 Consultar
+        </button>
+      </div>
+    </div>
+
+    <div id="pa-stats" style="display:none">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-number" id="pa-total-pac">0</div>
+          <div class="stat-label">Pacientes Asignados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="pa-total-dx">0</div>
+          <div class="stat-label">Diagnósticos Emitidos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="pa-total-ord">0</div>
+          <div class="stat-label">Órdenes Médicas</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pa-result-area" style="display:none">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('pa','pacientes')">👥 Pacientes</button>
+        <button class="tab" onclick="showTab('pa','diagnosticos')">🩺 Diagnósticos</button>
+        <button class="tab" onclick="showTab('pa','ordenes')">📋 Órdenes</button>
+      </div>
+
+      <div class="tab-content active" id="pa-tab-pacientes">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Paciente ID</th><th>Fecha Asignación</th><th>Estado</th></tr></thead>
+          <tbody id="pa-tbody-pacientes"></tbody>
+        </table></div>
+      </div>
+      <div class="tab-content" id="pa-tab-diagnosticos">
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Paciente ID</th><th>Diagnóstico</th><th>CIE-10</th><th>Gravedad</th><th>Fecha</th></tr></thead>
+          <tbody id="pa-tbody-diagnosticos"></tbody>
+        </table></div>
+      </div>
+      <div class="tab-content" id="pa-tab-ordenes">
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Paciente ID</th><th>Tipo</th><th>Estado</th><th>Vencimiento</th></tr></thead>
+          <tbody id="pa-tbody-ordenes"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="result-panel loading" id="result-pa">Ingresa un ID de doctor y presiona "Consultar".</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  5. CONSULTAR PACIENTE                              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-consulta">
+    <div class="page-header">
+      <div class="breadcrumb">Doctor <span>›</span> Consultas</div>
+      <div class="page-title">Consultar Paciente</div>
+      <div class="page-sub">GET /doctor/consulta-paciente — Vista clínica de un paciente específico</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Buscar Paciente</div>
+        <div class="card-badge">GET /doctor/consulta-paciente</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-end">
+        <div class="form-group" style="flex:1;max-width:200px">
+          <label>ID del Doctor</label>
+          <input type="number" id="cp-doctor-id" value="1" min="1"/>
+        </div>
+        <div class="form-group" style="flex:1;max-width:200px">
+          <label>ID del Paciente</label>
+          <input type="number" id="cp-paciente-id" placeholder="Ej: 1" min="1"/>
+        </div>
+        <button class="btn btn-primary" onclick="consultarPaciente()" id="btn-cp">
+          🔍 Consultar
+        </button>
+      </div>
+    </div>
+
+    <div id="cp-result-area" style="display:none">
+      <div class="card" id="cp-info-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title" id="cp-doctor-name"></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px" id="cp-paciente-info"></div>
+          </div>
+          <div id="cp-asignado-badge"></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('cp','dx')">🩺 Diagnósticos</button>
+        <button class="tab" onclick="showTab('cp','ord')">📋 Órdenes</button>
+      </div>
+
+      <div class="tab-content active" id="cp-tab-dx">
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Diagnóstico</th><th>CIE-10</th><th>Gravedad</th><th>Descripción</th><th>Fecha</th></tr></thead>
+          <tbody id="cp-tbody-dx"></tbody>
+        </table></div>
+      </div>
+      <div class="tab-content" id="cp-tab-ord">
+        <div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Tipo</th><th>Detalle</th><th>Estado</th><th>Vencimiento</th></tr></thead>
+          <tbody id="cp-tbody-ord"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="result-panel loading" id="result-cp">Ingresa IDs de doctor y paciente para consultar.</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  6. VER RECETAS DEL PACIENTE                        -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-recetas-view">
+    <div class="page-header">
+      <div class="breadcrumb">Doctor <span>›</span> Consultas</div>
+      <div class="page-title">Ver Recetas del Paciente</div>
+      <div class="page-sub">GET /doctor/recetas-paciente — Recetas emitidas a un paciente</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Filtrar Recetas</div>
+        <div class="card-badge">GET /doctor/recetas-paciente</div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="form-group" style="min-width:160px">
+          <label>ID del Doctor</label>
+          <input type="number" id="rv-doctor-id" value="1" min="1"/>
+        </div>
+        <div class="form-group" style="min-width:160px">
+          <label>ID del Paciente</label>
+          <input type="number" id="rv-paciente-id" placeholder="Ej: 1" min="1"/>
+        </div>
+        <div class="form-group" style="min-width:160px">
+          <label>Estado (opcional)</label>
+          <select id="rv-estado">
+            <option value="">Todos</option>
+            <option value="VIGENTE">VIGENTE</option>
+            <option value="ENTREGADO">ENTREGADO</option>
+            <option value="CADUCADO">CADUCADO</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="getRecetas()" id="btn-rv">
+          🔍 Buscar
+        </button>
+      </div>
+    </div>
+
+    <div id="rv-result-area" style="display:none">
+      <div class="table-wrap"><table>
+        <thead><tr><th>ID</th><th>Medicamento</th><th>Dosis</th><th>Duración</th><th>Indicaciones</th><th>Emisión</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+        <tbody id="rv-tbody"></tbody>
+      </table></div>
+    </div>
+
+    <div class="result-panel loading" id="result-rv">Ingresa los IDs y presiona "Buscar".</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  7. VER CITAS                                      -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-citas">
+    <div class="page-header">
+      <div class="breadcrumb">Doctor <span>›</span> Consultas</div>
+      <div class="page-title">Consultar Citas</div>
+      <div class="page-sub">
+        GET /clinica/citas/{fecha}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Buscar Citas por Fecha</div>
+        <div class="card-badge">
+          GET /clinica/citas/{fecha}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:flex-end">
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="ct-fecha"/>
+        </div>
+
+        <button
+          class="btn btn-primary"
+          onclick="consultarCitas()"
+          id="btn-ct">
+          📅 Buscar
+        </button>
+      </div>
+    </div>
+
+    <div id="ct-result-area" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Paciente</th>
+              <th>Doctor</th>
+              <th>Fecha/Hora</th>
+              <th>Duración</th>
+              <th>Motivo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="ct-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="result-panel loading" id="result-ct">
+      Selecciona una fecha y presiona "Buscar".
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  8. CONFIGURACIÓN                                   -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section" id="sec-config">
+    <div class="page-header">
+      <div class="breadcrumb">Sistema</div>
+      <div class="page-title">Configuración</div>
+      <div class="page-sub">URL base del API FastAPI</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Conexión al API</div></div>
+      <div class="form-group">
+        <label>URL Base del API</label>
+        <input type="text" id="api-url" value="http://localhost:8001" placeholder="http://localhost:8001"/>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:12px">
+        <button class="btn btn-primary" onclick="guardarConfig()">💾 Guardar</button>
+        <button class="btn btn-secondary" onclick="testConnection()">🔌 Probar Conexión</button>
+      </div>
+      <div class="result-panel loading" id="result-config" style="margin-top:16px">La URL se guarda en el navegador (localStorage).</div>
+    </div>
+
+    <div class="card" style="margin-top:0">
+      <div class="card-header"><div class="card-title">Endpoints disponibles</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td><span class="status status-emitida">POST</span></td><td>/doctor/diagnostico</td><td>Emitir diagnóstico</td></tr>
+          <tr><td><span class="status status-emitida">POST</span></td><td>/doctor/orden-medica</td><td>Generar orden médica</td></tr>
+          <tr><td><span class="status status-emitida">POST</span></td><td>/doctor/receta</td><td>Emitir receta</td></tr>
+          <tr><td><span class="status status-vigente">GET</span></td><td>/doctor/{id}/pacientes-atendidos</td><td>Pacientes del doctor</td></tr>
+          <tr><td><span class="status status-vigente">GET</span></td><td>/doctor/consulta-paciente</td><td>Consulta clínica por paciente</td></tr>
+          <tr><td><span class="status status-vigente">GET</span></td><td>/doctor/recetas-paciente</td><td>Recetas de un paciente</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────
+let API_BASE = localStorage.getItem('api_url') || 'http://localhost:8001';
+document.getElementById('api-url').value = API_BASE;
+
+function getBase(){ return document.getElementById('api-url').value.replace(/\/$/,'') }
+
+// ── Nav ───────────────────────────────────────────────────
+function showSection(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  // Sync doctor ID inputs
+  const gid = document.getElementById('globalDoctorId').value;
+  ['dx-doctor-id','om-doctor-id','rx-doctor-id','pa-doctor-id','cp-doctor-id','rv-doctor-id']
+    .forEach(id=>{ const el=document.getElementById(id); if(el&&!el.value) el.value=gid; });
+}
+
+function showTab(prefix, tab){
+  const area = document.getElementById('sec-'+prefix) || document.querySelector('.section.active');
+  area.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  area.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById(prefix+'-tab-'+tab).classList.add('active');
+}
+
+function updateAvatar(){
+  document.getElementById('avatarLetter').textContent =
+    document.getElementById('globalDoctorId').value || 'D';
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show '+type;
+  setTimeout(()=>t.className='toast',3500);
+}
+
+// ── Set result ────────────────────────────────────────────
+function setResult(id, data, isError=false){
+  const el = document.getElementById(id);
+  el.className = 'result-panel '+(isError?'error':'success');
+  el.innerHTML = '<pre style="white-space:pre-wrap;font-size:12px;font-family:monospace">'+
+    JSON.stringify(data,null,2)+'</pre>';
+}
+
+function setLoading(btnId, resultId, loading){
+  const btn = document.getElementById(btnId);
+  if(loading){
+    btn._orig = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> Enviando...';
+    btn.disabled = true;
+    document.getElementById(resultId).className='result-panel loading';
+    document.getElementById(resultId).textContent='Conectando con el API...';
+  } else {
+    btn.innerHTML = btn._orig;
+    btn.disabled = false;
+  }
+}
+
+// ── Limpiar forms ─────────────────────────────────────────
+function limpiarForm(prefix){
+  const inputs = document.querySelectorAll('#sec-'+prefix+' input, #sec-'+prefix+' textarea, #sec-'+prefix+' select');
+  // Solo limpiar campos que no sean ID doctor
+  inputs.forEach(el=>{
+    if(!el.id.includes('doctor-id')) el.value='';
+  });
+}
+
+// ── Gravedad badge ────────────────────────────────────────
+function gravedadBadge(g){
+  if(!g) return '-';
+  const map = {LEVE:'leve',MODERADO:'moderado',GRAVE:'grave',CRITICO:'critico'};
+  return `<span class="status status-${map[g]||'leve'}">${g}</span>`;
+}
+function estadoBadge(e){
+  if(!e) return '-';
+  const m = {EMITIDA:'emitida',VIGENTE:'vigente',CADUCADO:'caducado',ENTREGADO:'entregado',AGENDADA:'agendada'};
+  return `<span class="status status-${m[e]||'emitida'}">${e}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  1. EMITIR DIAGNÓSTICO
+// ══════════════════════════════════════════════════════════
+async function emitirDiagnostico(){
+  const body = {
+    doctor_id:          parseInt(document.getElementById('dx-doctor-id').value),
+    paciente_id:        parseInt(document.getElementById('dx-paciente-id').value),
+    codigo_cie:         document.getElementById('dx-cie').value||null,
+    nombre_diagnostico: document.getElementById('dx-nombre').value,
+    descripcion:        document.getElementById('dx-descripcion').value||null,
+    gravedad:           document.getElementById('dx-gravedad').value
+  };
+  if(!body.paciente_id||!body.nombre_diagnostico)
+    return showToast('ID Paciente y Nombre del Diagnóstico son obligatorios','error');
+
+  setLoading('btn-dx','result-dx',true);
+  try{
+    const res = await fetch(getBase()+'/doctor/diagnostico',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    setResult('result-dx', data, !res.ok);
+    if(res.ok) showToast('✅ Diagnóstico emitido correctamente');
+    else showToast('❌ Error: '+( data.detail||JSON.stringify(data)),'error');
+  }catch(e){
+    setResult('result-dx',{error:'No se pudo conectar al API. Verifica la URL en Configuración.',detalle:e.message},true);
+    showToast('❌ Sin conexión al API','error');
+  }
+  setLoading('btn-dx','result-dx',false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  2. ORDEN MÉDICA
+// ══════════════════════════════════════════════════════════
+async function generarOrden(){
+  const body = {
+    doctor_id:         parseInt(document.getElementById('om-doctor-id').value),
+    paciente_id:       parseInt(document.getElementById('om-paciente-id').value),
+    tipo_orden:        document.getElementById('om-tipo').value,
+    detalle:           document.getElementById('om-detalle').value,
+    fecha_vencimiento: document.getElementById('om-vencimiento').value
+  };
+  if(!body.paciente_id||!body.detalle||!body.fecha_vencimiento)
+    return showToast('Paciente, Detalle y Fecha de Vencimiento son obligatorios','error');
+
+  setLoading('btn-om','result-om',true);
+  try{
+    const res = await fetch(getBase()+'/doctor/orden-medica',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    setResult('result-om', data, !res.ok);
+    if(res.ok) showToast('✅ Orden médica generada');
+    else showToast('❌ '+(data.detail||'Error'),'error');
+  }catch(e){
+    setResult('result-om',{error:'Sin conexión al API',detalle:e.message},true);
+    showToast('❌ Sin conexión al API','error');
+  }
+  setLoading('btn-om','result-om',false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  3. EMITIR RECETA
+// ══════════════════════════════════════════════════════════
+async function emitirReceta(){
+  const ordenId = document.getElementById('rx-orden-id').value;
+  const venc    = document.getElementById('rx-vencimiento').value;
+  const body = {
+    doctor_id:         parseInt(document.getElementById('rx-doctor-id').value),
+    paciente_id:       parseInt(document.getElementById('rx-paciente-id').value),
+    orden_medica_id:   ordenId ? parseInt(ordenId) : null,
+    medicamento:       document.getElementById('rx-medicamento').value,
+    dosis:             document.getElementById('rx-dosis').value||null,
+    duracion:          document.getElementById('rx-duracion').value||null,
+    indicaciones:      document.getElementById('rx-indicaciones').value||null,
+    fecha_vencimiento: venc||null
+  };
+  if(!body.paciente_id||!body.medicamento)
+    return showToast('Paciente ID y Medicamento son obligatorios','error');
+
+  setLoading('btn-rx','result-rx',true);
+  try{
+    const res = await fetch(getBase()+'/doctor/receta',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    setResult('result-rx', data, !res.ok);
+    if(res.ok) showToast('✅ Receta emitida correctamente');
+    else showToast('❌ '+(data.detail||'Error'),'error');
+  }catch(e){
+    setResult('result-rx',{error:'Sin conexión al API',detalle:e.message},true);
+    showToast('❌ Sin conexión al API','error');
+  }
+  setLoading('btn-rx','result-rx',false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  4. PACIENTES ATENDIDOS
+// ══════════════════════════════════════════════════════════
+async function getPacientesAtendidos(){
+  const doctorId = document.getElementById('pa-doctor-id').value;
+  if(!doctorId) return showToast('Ingresa el ID del doctor','error');
+
+  setLoading('btn-pa','result-pa',true);
+  document.getElementById('pa-stats').style.display='none';
+  document.getElementById('pa-result-area').style.display='none';
+  try{
+    const res  = await fetch(getBase()+`/doctor/${doctorId}/pacientes-atendidos`);
+    const data = await res.json();
+    if(!res.ok){ setResult('result-pa',data,true); showToast('❌ '+(data.detail||'Error'),'error'); }
+    else{
+      // Stats
+      document.getElementById('pa-total-pac').textContent = data.total_pacientes||0;
+      document.getElementById('pa-total-dx').textContent  = data.total_diagnosticos||0;
+      document.getElementById('pa-total-ord').textContent = data.total_ordenes||0;
+      document.getElementById('pa-stats').style.display='grid';
+
+      // Pacientes table
+      document.getElementById('pa-tbody-pacientes').innerHTML =
+        (data.pacientes_asignados||[]).map(p=>`
+          <tr><td>${p.paciente_id}</td><td>${p.fecha_asignacion||'-'}</td>
+          <td><span class="status status-vigente">ACTIVO</span></td></tr>`).join('') ||
+        '<tr><td colspan="3" style="color:var(--muted);text-align:center">Sin pacientes asignados</td></tr>';
+
+      // Diagnosticos table
+      document.getElementById('pa-tbody-diagnosticos').innerHTML =
+        (data.diagnosticos_emitidos||[]).map(d=>`
+          <tr><td>${d.id}</td><td>${d.paciente_id}</td><td>${d.nombre_diagnostico}</td>
+          <td>${d.codigo_cie||'-'}</td><td>${gravedadBadge(d.gravedad)}</td><td>${d.fecha||'-'}</td></tr>`).join('') ||
+        '<tr><td colspan="6" style="color:var(--muted);text-align:center">Sin diagnósticos</td></tr>';
+
+      // Ordenes table
+      document.getElementById('pa-tbody-ordenes').innerHTML =
+        (data.ordenes_emitidas||[]).map(o=>`
+          <tr><td>${o.id}</td><td>${o.paciente_id}</td><td>${o.tipo||'-'}</td>
+          <td>${estadoBadge(o.estado)}</td><td>${o.vencimiento||'-'}</td></tr>`).join('') ||
+        '<tr><td colspan="5" style="color:var(--muted);text-align:center">Sin órdenes</td></tr>';
+
+      document.getElementById('pa-result-area').style.display='block';
+      document.getElementById('result-pa').style.display='none';
+      showToast('✅ Dr. '+data.doctor?.nombre);
+    }
+  }catch(e){
+    setResult('result-pa',{error:'Sin conexión al API',detalle:e.message},true);
+    showToast('❌ Sin conexión al API','error');
+  }
+  setLoading('btn-pa','result-pa',false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  5. CONSULTAR PACIENTE
+// ══════════════════════════════════════════════════════════
+async function consultarPaciente(){
+  const docId = document.getElementById('cp-doctor-id').value;
+  const pacId = document.getElementById('cp-paciente-id').value;
+  if(!docId||!pacId) return showToast('Ingresa ambos IDs','error');
+
+  setLoading('btn-cp','result-cp',true);
+  document.getElementById('cp-result-area').style.display='none';
+  try{
+    const res  = await fetch(getBase()+`/doctor/consulta-paciente?paciente_id=${pacId}&doctor_id=${docId}`);
+    const data = await res.json();
+    if(!res.ok){ setResult('result-cp',data,true); showToast('❌ '+(data.detail||'Error'),'error'); }
+    else{
+      document.getElementById('cp-doctor-name').textContent =
+        (data.consultado_por?.nombre||'Doctor') + ' — ' + (data.consultado_por?.especialidad||'');
+      document.getElementById('cp-paciente-info').textContent =
+        `Paciente ID: ${data.paciente_id} | `+
+        `Diagnósticos: ${data.resumen?.total_diagnosticos||0} | `+
+        `Órdenes: ${data.resumen?.total_ordenes||0}`;
+      document.getElementById('cp-asignado-badge').innerHTML =
+        data.paciente_asignado
+          ? '<span class="status status-vigente">✓ Paciente Asignado</span>'
+          : '<span class="status status-caducado">Sin asignación formal</span>';
+
+      document.getElementById('cp-tbody-dx').innerHTML =
+        (data.diagnosticos||[]).map(d=>`
+          <tr><td>${d.id}</td><td>${d.nombre_diagnostico}</td><td>${d.codigo_cie||'-'}</td>
+          <td>${gravedadBadge(d.gravedad)}</td>
+          <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.descripcion||'-'}</td>
+          <td>${d.fecha||'-'}</td></tr>`).join('') ||
+        '<tr><td colspan="6" style="color:var(--muted);text-align:center">Sin diagnósticos</td></tr>';
+
+      document.getElementById('cp-tbody-ord').innerHTML =
+        (data.ordenes_medicas||[]).map(o=>`
+          <tr><td>${o.id}</td><td>${o.tipo||'-'}</td>
+          <td style="max-width:200px">${o.detalle||'-'}</td>
+          <td>${estadoBadge(o.estado)}</td><td>${o.vencimiento||'-'}</td></tr>`).join('') ||
+        '<tr><td colspan="5" style="color:var(--muted);text-align:center">Sin órdenes</td></tr>';
+
+      document.getElementById('cp-result-area').style.display='block';
+      document.getElementById('result-cp').style.display='none';
+      showToast('✅ Consulta cargada correctamente');
+    }
+  }catch(e){
+    setResult('result-cp',{error:'Sin conexión al API',detalle:e.message},true);
+    showToast('❌ Sin conexión al API','error');
+  }
+  setLoading('btn-cp','result-cp',false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  6. VER RECETAS
+// ══════════════════════════════════════════════════════════
+async function getRecetas(){
+  const docId = document.getElementById('rv-doctor-id').value;
+  const pacId = document.getElementById('rv-paciente-id').value;
+  const est   = document.getElementById('rv-estado').value;
+  if(!docId||!pacId) return showToast('Ingresa ambos IDs','error');
+
+  let url = getBase()+`/doctor/recetas-paciente?paciente_id=${pacId}&doctor_id=${docId}`;
+  if(est) url += `&estado=${est}`;
+
+  setLoading('btn-rv','result-rv',true);
+  document.getElementById('rv-result-area').style.display='none';
+  try{
+    const res  = await fetch(url);
+    const data = await res.json();
+    if(!res.ok){ setResult('result-rv',data,true); showToast('❌ '+(data.detail||'Error'),'error'); }
+    else{
+      document.getElementById('rv-tbody').innerHTML =
+        (data.recetas||[]).map(r=>`
+          <tr><td>${r.id}</td><td><strong>${r.medicamento}</strong></td>
+          <td>${r.dosis||'-'}</td><td>${r.duracion||'-'}</td>
+          <td style="max-width:180px;font-size:12px">${r.indicaciones||'-'}</td>
+          <td>${r.fecha_emision||'-'}</td><td>${r.fecha_vencimiento||'-'}</td>
+          <td>${estadoBadge(r.estado)}</td></tr>`).join('') ||
+        '<tr><td colspan="8" style="color:var(--muted);text-align:center">Sin recetas encontradas</td></tr>';
+
+      document.getElementById('rv-result-area').style.display='block';
+      document.getElementById('result-rv').style.display='none';
+      showToast(`✅ ${data.total_recetas||0} receta(s) encontradas`);
+    }
+  }catch(e){
+    setResult('result-rv',{error:'Sin conexión al API',detalle:e.message},true);
+    showToast('❌ Sin conexión al API','error');
+  }
+  setLoading('btn-rv','result-rv',false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  7. CONSULTAR CITAS
+// ══════════════════════════════════════════════════════════
+async function consultarCitas(){
+
+  const fecha = document.getElementById('ct-fecha').value;
+
+  if(!fecha){
+    return showToast('Selecciona una fecha','error');
+  }
+
+  setLoading('btn-ct','result-ct',true);
+
+  document.getElementById('ct-result-area').style.display='none';
+
+  try{
+    
+    const url =
+      'https://api-clinica-soa.onrender.com/clinica/citas/' +
+      fecha;
+
+    const res = await fetch(url);
+
+    const data = await res.json();
+
+    if(!res.ok){
+      setResult('result-ct',data,true);
+      showToast('❌ Error consultando citas','error');
+    }
+    else{
+
+      document.getElementById('ct-tbody').innerHTML =
+        (data || []).map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>${c.paciente_id}</td>
+            <td>${c.doctor_id}</td>
+            <td>${new Date(c.fecha_hora).toLocaleString()}</td>
+            <td>${c.duracion_minutos} min</td>
+            <td>${c.motivo || '-'}</td>
+            <td>${estadoBadge(c.estado)}</td>
+          </tr>
+        `).join('')
+        ||
+        `<tr>
+            <td colspan="7"
+                style="text-align:center;color:var(--muted)">
+                No existen citas para la fecha seleccionada
+            </td>
+         </tr>`;
+
+      document.getElementById('ct-result-area').style.display='block';
+      document.getElementById('result-ct').style.display='none';
+
+      showToast(`✅ ${data.length} cita(s) encontradas`);
+    }
+
+  }catch(e){
+
+    setResult(
+      'result-ct',
+      {
+        error:'No se pudo conectar al API',
+        detalle:e.message
+      },
+      true
+    );
+
+    showToast('❌ Error de conexión','error');
+  }
+
+  setLoading('btn-ct','result-ct',false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════
+function guardarConfig(){
+  API_BASE = document.getElementById('api-url').value;
+  localStorage.setItem('api_url', API_BASE);
+  setResult('result-config',{mensaje:'URL guardada correctamente',url:API_BASE});
+  showToast('✅ URL guardada');
+}
+
+async function testConnection(){
+  const url = document.getElementById('api-url').value;
+  setResult('result-config',{estado:'Probando conexión...',url});
+  try{
+    const res = await fetch(url+'/docs',{method:'HEAD',mode:'no-cors'});
+    setResult('result-config',{estado:'✅ API accesible',url,nota:'Si ves esto, el servidor está corriendo'});
+    showToast('✅ Conexión exitosa');
+  }catch(e){
+    setResult('result-config',{estado:'❌ No se pudo conectar',url,error:e.message,solucion:'Asegúrate de que uvicorn esté corriendo: uvicorn main:app --reload'},true);
+    showToast('❌ Sin conexión','error');
+  }
+}
+
+// Setear fecha mínima hoy+1 en los date inputs
+window.onload = ()=>{
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  const fmt = tomorrow.toISOString().split('T')[0];
+  ['om-vencimiento','rx-vencimiento'].forEach(id=>{
+    const el=document.getElementById(id); if(el){ el.min=fmt; }
+  });
+};
+</script>
+</body>
+</html>
