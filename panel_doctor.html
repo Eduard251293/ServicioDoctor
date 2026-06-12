@@ -468,8 +468,12 @@
               <input type="number" name="paciente_id" required />
             </div>
             <div>
-              <label>Código CIE-10 (opcional)</label>
-              <input type="text" name="codigo_cie" placeholder="J06.9" />
+              <label>Código CIE-10 (opcional)</label>     
+              <select id="dx-cie">
+                <option value="I10">Hipertensión</option>
+                <option value="J06.9">Gripe</option>
+                <option value="E11">Diabetes tipo 2</option>
+              </select>
             </div>
           </div>
           <label>Nombre del diagnóstico</label>
