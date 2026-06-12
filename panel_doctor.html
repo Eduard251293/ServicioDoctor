@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EcoSalud · Panel Doctor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     TOKENS DE DISEÑO
+     ============================================================ */
+  :root{
+    --bg:#f1f6f5;
+    --surface:#ffffff;
+    --ink:#13313a;
+    --ink-soft:#5f7c83;
+    --primary:#0f766e;
+    --primary-dark:#0b5852;
+    --primary-soft:#d6f3ef;
+    --accent:#d97706;
+    --danger:#dc2626;
+    --danger-soft:#fde2e1;
+    --border:#dde7e5;
+    --radius:12px;
+    --font-display:'Outfit', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:var(--font-body);
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+  }
+
+  /* ============================================================
+     LOGIN
+     ============================================================ */
+  #vista-login{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .login-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:40px 36px;
+    width:100%;
+    max-width:380px;
+    box-shadow:0 8px 30px -10px rgba(15,118,110,0.18);
+  }
+  .login-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:28px;
+  }
+  .login-brand .dot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--primary);
+    flex-shrink:0;
+  }
+  .login-brand h1{
+    font-family:var(--font-display);
+    font-size:20px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .login-brand span{
+    display:block;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+
+  /* Línea de pulso (ECG) — elemento distintivo */
+  .pulso{
+    width:100%;
+    height:34px;
+    margin-bottom:22px;
+  }
+  .pulso path{
+    fill:none;
+    stroke:var(--primary);
+    stroke-width:2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    stroke-dasharray:340;
+    stroke-dashoffset:340;
+    animation:dibujar 2.4s ease-in-out infinite;
+  }
+  @keyframes dibujar{
+    0%{ stroke-dashoffset:340; }
+    50%{ stroke-dashoffset:0; }
+    100%{ stroke-dashoffset:-340; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .pulso path{ animation:none; stroke-dashoffset:0; }
+  }
+
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    margin-bottom:6px;
+    color:var(--ink);
+  }
+  input, select, textarea{
+    width:100%;
+    font-family:var(--font-body);
+    font-size:14px;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:#fbfdfd;
+    color:var(--ink);
+    margin-bottom:16px;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus, select:focus, textarea:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px var(--primary-soft);
+  }
+
+  button{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    border-radius:8px;
+    padding:11px 18px;
+    cursor:pointer;
+    transition:background .15s ease, transform .05s ease;
+  }
+  button:active{ transform:translateY(1px); }
+
+  .btn-primary{
+    background:var(--primary);
+    color:#fff;
+    width:100%;
+  }
+  .btn-primary:hover{ background:var(--primary-dark); }
+
+  .btn-secundario{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--ink);
+  }
+  .btn-secundario:hover{ border-color:var(--primary); color:var(--primary); }
+
+  .mensaje-error{
+    background:var(--danger-soft);
+    color:var(--danger);
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:13px;
+    margin-bottom:16px;
+    display:none;
+  }
+  .mensaje-error.visible{ display:block; }
+
+  /* ============================================================
+     PANEL PRINCIPAL
+     ============================================================ */
+  #vista-panel{ display:none; min-height:100vh; }
+  #vista-panel.activo{ display:flex; }
+
+  /* Barra lateral */
+  .sidebar{
+    width:230px;
+    flex-shrink:0;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    padding:24px 18px;
+    display:flex;
+    flex-direction:column;
+  }
+  .sidebar .login-brand{ margin-bottom:8px; }
+  .sidebar .pulso{ height:28px; margin-bottom:24px; }
+
+  .doctor-card{
+    background:var(--primary-soft);
+    border-radius:var(--radius);
+    padding:14px;
+    margin-bottom:24px;
+  }
+  .doctor-card .nombre{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:15px;
+    margin:0 0 2px;
+  }
+  .doctor-card .especialidad{
+    font-size:12px;
+    color:var(--primary-dark);
+    margin:0 0 2px;
+  }
+  .doctor-card .colegiatura{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+
+  nav.menu{ display:flex; flex-direction:column; gap:4px; flex:1; }
+  nav.menu button{
+    background:transparent;
+    border:none;
+    text-align:left;
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    width:100%;
+  }
+  nav.menu button:hover{ background:var(--bg); color:var(--ink); }
+  nav.menu button.activo{
+    background:var(--primary);
+    color:#fff;
+  }
+
+  /* Contenido */
+  .contenido{
+    flex:1;
+    padding:32px 40px;
+    max-width:880px;
+  }
+  .contenido h2{
+    font-family:var(--font-display);
+    font-size:22px;
+    font-weight:600;
+    margin:0 0 4px;
+  }
+  .contenido .subtitulo{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0 0 24px;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:24px;
+    margin-bottom:20px;
+  }
+  .card h3{
+    font-family:var(--font-display);
+    font-size:15px;
+    font-weight:600;
+    margin:0 0 16px;
+  }
+
+  .fila{ display:flex; gap:14px; }
+  .fila > div{ flex:1; }
+
+  .resultado{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    background:#0f2a28;
+    color:#d6f3ef;
+    border-radius:8px;
+    padding:14px;
+    white-space:pre-wrap;
+    word-break:break-word;
+    max-height:340px;
+    overflow:auto;
+    margin-top:14px;
+    display:none;
+  }
+  .resultado.visible{ display:block; }
+  .resultado.error{ background:var(--danger-soft); color:var(--danger); }
+
+  .badge{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 8px;
+    border-radius:99px;
+    background:var(--primary-soft);
+    color:var(--primary-dark);
+    margin-left:8px;
+  }
+
+  .tabla-pacientes{ width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .tabla-pacientes th, .tabla-pacientes td{
+    text-align:left;
+    padding:8px 10px;
+    border-bottom:1px solid var(--border);
+  }
+  .tabla-pacientes th{ color:var(--ink-soft); font-weight:500; font-size:12px; }
+
+  .vacio{ font-size:13px; color:var(--ink-soft); }
+
+  @media (max-width: 720px){
+    .sidebar{ width:100%; max-width:none; }
+    #vista-panel.activo{ flex-direction:column; }
+    .contenido{ padding:24px; }
+    .fila{ flex-direction:column; }
+  }
+
+  /* ============================================================
+     NUEVO: Estados (badges) para citas
+     ============================================================ */
+  .estado-badge{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:99px;
+  }
+  .estado-AGENDADA{ background:#dbeafe; color:#1d4ed8; }
+  .estado-CONFIRMADA{ background:var(--primary-soft); color:var(--primary-dark); }
+  .estado-ATENDIDA{ background:#dcfce7; color:#166534; }
+  .estado-CANCELADA{ background:var(--danger-soft); color:var(--danger); }
+  .estado-NO_ASISTIO{ background:#f1f5f9; color:var(--ink-soft); }
+
+  /* ============================================================
+     NUEVO: Configuración API
+     ============================================================ */
+  .config-fila{ display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+  .config-fila > div{ flex:1; min-width:220px; }
+  .config-fila button{ flex-shrink:0; }
+
+  .tabla-endpoints{ width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .tabla-endpoints th, .tabla-endpoints td{
+    text-align:left; padding:8px 10px; border-bottom:1px solid var(--border);
+  }
+  .tabla-endpoints th{ color:var(--ink-soft); font-weight:500; font-size:12px; }
+  .metodo{
+    font-family:var(--font-mono); font-size:11px; font-weight:600;
+    padding:2px 8px; border-radius:6px;
+  }
+  .metodo-GET{ background:var(--primary-soft); color:var(--primary-dark); }
+  .metodo-POST{ background:#fef3c7; color:#92400e; }
+
+  /* ============================================================
+     NUEVO: Toast de notificación
+     ============================================================ */
+  #toast{
+    position:fixed; bottom:24px; right:24px; z-index:2000;
+    background:var(--ink); color:#fff;
+    padding:12px 18px; border-radius:8px; font-size:13px;
+    transform:translateY(20px); opacity:0;
+    transition:all .25s ease; pointer-events:none;
+    max-width:320px;
+  }
+  #toast.show{ transform:translateY(0); opacity:1; }
+  #toast.error{ background:var(--danger); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     VISTA 1: LOGIN
+     ============================================================ -->
+<div id="vista-login">
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="dot"></span>
+      <div>
+        <h1>EcoSalud</h1>
+        <span>Panel del Doctor</span>
+      </div>
+    </div>
+
+    <!-- Línea de pulso decorativa -->
+    <svg class="pulso" viewBox="0 0 340 34" preserveAspectRatio="none">
+      <path d="M0,17 L60,17 L75,4 L90,30 L105,17 L150,17 L165,8 L180,26 L195,17 L340,17"/>
+    </svg>
+
+    <div id="login-error" class="mensaje-error"></div>
+
+    <form id="form-login">
+      <label for="login-colegiatura">Número de colegiatura</label>
+      <input id="login-colegiatura" type="text" placeholder="CMP-001" required autocomplete="username" />
+
+      <label for="login-password">Contraseña</label>
+      <input id="login-password" type="password" placeholder="••••••••" required autocomplete="current-password" />
+
+      <button type="submit" class="btn-primary">Iniciar sesión</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     VISTA 2: PANEL PRINCIPAL
+     ============================================================ -->
+<div id="vista-panel">
+
+  <!-- Barra lateral -->
+  <aside class="sidebar">
+    <div class="login-brand">
+      <span class="dot"></span>
+      <div>
+        <h1>EcoSalud</h1>
+        <span>Panel del Doctor</span>
+      </div>
+    </div>
+
+    <svg class="pulso" viewBox="0 0 340 28" preserveAspectRatio="none">
+      <path d="M0,14 L60,14 L75,2 L90,24 L105,14 L150,14 L165,6 L180,22 L195,14 L340,14"/>
+    </svg>
+
+    <div class="doctor-card">
+      <p class="nombre" id="info-nombre">—</p>
+      <p class="especialidad" id="info-especialidad">—</p>
+      <p class="colegiatura" id="info-colegiatura">—</p>
+    </div>
+
+    <nav class="menu">
+      <button data-vista="resumen" class="activo">Resumen</button>
+      <button data-vista="diagnostico">Diagnóstico</button>
+      <button data-vista="orden">Orden médica</button>
+      <button data-vista="receta">Receta</button>
+      <button data-vista="consulta">Consultar paciente</button>
+      <button data-vista="recetas-paciente">Recetas de paciente</button>
+      <button data-vista="citas">Ver citas</button>
+      <button data-vista="config">Configuración API</button>
+    </nav>
+
+    <button id="btn-logout" class="btn-secundario" style="margin-top:16px;">Cerrar sesión</button>
+  </aside>
+
+  <!-- Contenido dinámico -->
+  <main class="contenido">
+
+    <!-- ── Resumen ── -->
+    <section id="seccion-resumen" class="seccion">
+      <h2>Resumen</h2>
+      <p class="subtitulo">Pacientes asignados y actividad clínica registrada.</p>
+
+      <div class="card">
+        <h3>Pacientes asignados <span class="badge" id="badge-pacientes">0</span></h3>
+        <div id="tabla-pacientes-contenedor"><p class="vacio">Cargando...</p></div>
+      </div>
+
+      <div class="card">
+        <h3>Diagnósticos emitidos <span class="badge" id="badge-diagnosticos">0</span></h3>
+        <div id="tabla-diagnosticos-contenedor"><p class="vacio">Cargando...</p></div>
+      </div>
+
+      <div class="card">
+        <h3>Órdenes emitidas <span class="badge" id="badge-ordenes">0</span></h3>
+        <div id="tabla-ordenes-contenedor"><p class="vacio">Cargando...</p></div>
+      </div>
+    </section>
+
+    <!-- ── Diagnóstico ── -->
+    <section id="seccion-diagnostico" class="seccion" style="display:none;">
+      <h2>Registrar diagnóstico</h2>
+      <p class="subtitulo">POST /doctor/diagnostico</p>
+      <div class="card">
+        <form id="form-diagnostico">
+          <div class="fila">
+            <div>
+              <label>Paciente ID</label>
+              <input type="number" name="paciente_id" required />
+            </div>
+            <div>
+              <label>Código CIE-10 (opcional)</label>
+              <input type="text" name="codigo_cie" placeholder="J06.9" />
+            </div>
+          </div>
+          <label>Nombre del diagnóstico</label>
+          <input type="text" name="nombre_diagnostico" placeholder="Gripe común" required />
+          <label>Descripción (opcional)</label>
+          <textarea name="descripcion" rows="3" placeholder="Detalles del cuadro clínico"></textarea>
+          <label>Gravedad</label>
+          <select name="gravedad">
+            <option value="LEVE">LEVE</option>
+            <option value="MODERADO">MODERADO</option>
+            <option value="GRAVE">GRAVE</option>
+            <option value="CRITICO">CRITICO</option>
+          </select>
+          <button type="submit" class="btn-primary">Registrar diagnóstico</button>
+        </form>
+        <div class="resultado" id="resultado-diagnostico"></div>
+      </div>
+    </section>
+
+    <!-- ── Orden médica ── -->
+    <section id="seccion-orden" class="seccion" style="display:none;">
+      <h2>Emitir orden médica</h2>
+      <p class="subtitulo">POST /doctor/orden-medica</p>
+      <div class="card">
+        <form id="form-orden">
+          <div class="fila">
+            <div>
+              <label>Paciente ID</label>
+              <input type="number" name="paciente_id" required />
+            </div>
+            <div>
+              <label>Tipo de orden</label>
+              <select name="tipo_orden">
+                <option value="LABORATORIO">LABORATORIO</option>
+                <option value="IMAGENOLOGIA">IMAGENOLOGIA</option>
+                <option value="ESPECIALISTA">ESPECIALISTA</option>
+                <option value="PROCEDIMIENTO">PROCEDIMIENTO</option>
+              </select>
+            </div>
+          </div>
+          <label>Detalle</label>
+          <textarea name="detalle" rows="3" placeholder="Descripción de la orden" required></textarea>
+          <label>Fecha de vencimiento</label>
+          <input type="date" name="fecha_vencimiento" required />
+          <button type="submit" class="btn-primary">Emitir orden médica</button>
+        </form>
+        <div class="resultado" id="resultado-orden"></div>
+      </div>
+    </section>
+
+    <!-- ── Receta ── -->
+    <section id="seccion-receta" class="seccion" style="display:none;">
+      <h2>Emitir receta médica</h2>
+      <p class="subtitulo">POST /doctor/receta</p>
+      <div class="card">
+        <form id="form-receta">
+          <div class="fila">
+            <div>
+              <label>Paciente ID</label>
+              <input type="number" name="paciente_id" required />
+            </div>
+            <div>
+              <label>Orden médica ID (opcional)</label>
+              <input type="number" name="orden_medica_id" />
+            </div>
+          </div>
+          <label>Medicamento</label>
+          <input type="text" name="medicamento" placeholder="Paracetamol" required />
+          <div class="fila">
+            <div>
+              <label>Dosis</label>
+              <input type="text" name="dosis" placeholder="500mg" />
+            </div>
+            <div>
+              <label>Duración</label>
+              <input type="text" name="duracion" placeholder="7 días" />
+            </div>
+          </div>
+          <label>Indicaciones</label>
+          <textarea name="indicaciones" rows="2" placeholder="Tomar después de comer"></textarea>
+          <label>Fecha de vencimiento (opcional)</label>
+          <input type="date" name="fecha_vencimiento" />
+          <button type="submit" class="btn-primary">Emitir receta</button>
+        </form>
+        <div class="resultado" id="resultado-receta"></div>
+      </div>
+    </section>
+
+    <!-- ── Consultar paciente ── -->
+    <section id="seccion-consulta" class="seccion" style="display:none;">
+      <h2>Consultar paciente</h2>
+      <p class="subtitulo">GET /doctor/consulta-paciente</p>
+      <div class="card">
+        <form id="form-consulta">
+          <label>Paciente ID</label>
+          <input type="number" name="paciente_id" required />
+          <button type="submit" class="btn-primary">Consultar</button>
+        </form>
+        <div class="resultado" id="resultado-consulta"></div>
+      </div>
+    </section>
+
+    <!-- ── Recetas de paciente ── -->
+    <section id="seccion-recetas-paciente" class="seccion" style="display:none;">
+      <h2>Recetas de un paciente</h2>
+      <p class="subtitulo">GET /doctor/recetas-paciente</p>
+      <div class="card">
+        <form id="form-recetas-paciente">
+          <div class="fila">
+            <div>
+              <label>Paciente ID</label>
+              <input type="number" name="paciente_id" required />
+            </div>
+            <div>
+              <label>Estado (opcional)</label>
+              <select name="estado">
+                <option value="">Todos</option>
+                <option value="VIGENTE">VIGENTE</option>
+                <option value="ENTREGADO">ENTREGADO</option>
+                <option value="CADUCADO">CADUCADO</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-primary">Buscar recetas</button>
+        </form>
+        <div class="resultado" id="resultado-recetas-paciente"></div>
+      </div>
+    </section>
+
+    <!-- ── NUEVO: Ver citas (consume el contrato de ServicioClinicas) ── -->
+    <section id="seccion-citas" class="seccion" style="display:none;">
+      <h2>Consultar citas</h2>
+      <p class="subtitulo">GET /clinica/citas/{fecha} — Contrato del ServicioClinicas (no usa el token de este servicio)</p>
+      <div class="card">
+        <form id="form-citas">
+          <label>Fecha</label>
+          <input type="date" name="fecha" required />
+          <button type="submit" class="btn-primary">Buscar citas</button>
+        </form>
+        <div id="citas-resultado-area" style="display:none; margin-top:14px;">
+          <table class="tabla-pacientes">
+            <thead>
+              <tr>
+                <th>ID</th><th>Paciente</th><th>Doctor</th>
+                <th>Fecha/Hora</th><th>Duración</th><th>Motivo</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="citas-tbody"></tbody>
+          </table>
+        </div>
+        <div class="resultado" id="resultado-citas"></div>
+      </div>
+    </section>
+
+    <!-- ── NUEVO: Configuración API ── -->
+    <section id="seccion-config" class="seccion" style="display:none;">
+      <h2>Configuración</h2>
+      <p class="subtitulo">URL base del API ServicioDoctor / ServicioClinicas.</p>
+
+      <div class="card">
+        <h3>URL base del ServicioDoctor</h3>
+        <div class="config-fila">
+          <div>
+            <label>URL base</label>
+            <input type="text" id="config-base-doctor" placeholder="http://localhost:8001" />
+          </div>
+          <button type="button" class="btn-secundario" onclick="guardarConfigDoctor()">Guardar</button>
+          <button type="button" class="btn-secundario" onclick="probarConexionDoctor()">Probar conexión</button>
+        </div>
+        <div class="resultado" id="resultado-config-doctor"></div>
+      </div>
+
+      <div class="card">
+        <h3>URL base del ServicioClinicas (citas)</h3>
+        <div class="config-fila">
+          <div>
+            <label>URL base</label>
+            <input type="text" id="config-base-citas" placeholder="https://api-clinica-soa.onrender.com" />
+          </div>
+          <button type="button" class="btn-secundario" onclick="guardarConfigCitas()">Guardar</button>
+        </div>
+        <div class="resultado" id="resultado-config-citas"></div>
+      </div>
+
+      <div class="card">
+        <h3>Endpoints disponibles</h3>
+        <table class="tabla-endpoints">
+          <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+          <tbody>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/auth/login</td><td>Iniciar sesión</td><td>—</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/diagnostico</td><td>Emitir diagnóstico</td><td>JWT</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/orden-medica</td><td>Generar orden médica</td><td>JWT</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/receta</td><td>Emitir receta</td><td>JWT</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/{id}/pacientes-atendidos</td><td>Pacientes del doctor</td><td>JWT</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/consulta-paciente</td><td>Consulta clínica por paciente</td><td>JWT</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/recetas-paciente</td><td>Recetas de un paciente</td><td>JWT</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/doctores</td><td>Datos de doctores</td><td>JWT</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/clinica/citas/{fecha}</td><td>Citas por fecha (otro servicio)</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Notificación flotante -->
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN
+   ============================================================ */
+// La URL base del ServicioDoctor ahora es configurable desde la
+// sección "Configuración API" (se guarda en localStorage).
+// Si está vacía, se usan rutas relativas (mismo origen del panel).
+function obtenerBaseDoctorUrl(){
+  return localStorage.getItem("ecosalud_base_doctor") || "";
+}
+
+/* ============================================================
+   ESTADO DE SESIÓN (localStorage)
+   Guardamos el token y los datos del doctor para que la sesión
+   sobreviva si recargas la página
+   ============================================================ */
+function guardarSesion(datos){
+  localStorage.setItem("ecosalud_token", datos.access_token);
+  localStorage.setItem("ecosalud_doctor", JSON.stringify({
+    doctor_id: datos.doctor_id,
+    nombre: datos.nombre,
+    especialidad: datos.especialidad,
+    numero_colegiatura: datos.numero_colegiatura
+  }));
+}
+
+function obtenerToken(){
+  return localStorage.getItem("ecosalud_token");
+}
+
+function obtenerDoctor(){
+  const raw = localStorage.getItem("ecosalud_doctor");
+  return raw ? JSON.parse(raw) : null;
+}
+
+function cerrarSesion(){
+  localStorage.removeItem("ecosalud_token");
+  localStorage.removeItem("ecosalud_doctor");
+  mostrarLogin();
+}
+
+/* ============================================================
+   FETCH CON AUTENTICACIÓN
+   Agrega automáticamente el header Authorization: Bearer <token>
+   Si la API responde 401 (token vencido/inválido), cierra sesión
+   ============================================================ */
+async function apiFetch(ruta, opciones = {}){
+  const token = obtenerToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(opciones.headers || {})
+  };
+  if (token){
+    headers["Authorization"] = "Bearer " + token;
+  }
+
+  const resp = await fetch(obtenerBaseDoctorUrl() + ruta, { ...opciones, headers });
+
+  if (resp.status === 401){
+    cerrarSesion();
+    throw new Error("Sesión expirada. Vuelve a iniciar sesión.");
+  }
+
+  const data = await resp.json().catch(() => ({}));
+
+  if (!resp.ok){
+    // FastAPI devuelve el error en "detail"
+    const detalle = data.detail
+      ? (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail))
+      : `Error HTTP ${resp.status}`;
+    throw new Error(detalle);
+  }
+
+  return data;
+}
+
+/* ============================================================
+   CAMBIO DE VISTA: LOGIN <-> PANEL
+   ============================================================ */
+function mostrarLogin(){
+  document.getElementById("vista-login").style.display = "flex";
+  document.getElementById("vista-panel").classList.remove("activo");
+}
+
+function mostrarPanel(){
+  const doctor = obtenerDoctor();
+  if (!doctor) return mostrarLogin();
+
+  document.getElementById("vista-login").style.display = "none";
+  document.getElementById("vista-panel").classList.add("activo");
+
+  document.getElementById("info-nombre").textContent = doctor.nombre;
+  document.getElementById("info-especialidad").textContent = doctor.especialidad;
+  document.getElementById("info-colegiatura").textContent = doctor.numero_colegiatura;
+
+  cargarResumen();
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+document.getElementById("form-login").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const colegiatura = document.getElementById("login-colegiatura").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errorBox = document.getElementById("login-error");
+  errorBox.classList.remove("visible");
+
+  try{
+    const resp = await fetch(obtenerBaseDoctorUrl() + "/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ numero_colegiatura: colegiatura, password: password })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok){
+      throw new Error(data.detail || "No se pudo iniciar sesión");
+    }
+
+    guardarSesion(data);
+    mostrarPanel();
+
+  }catch(err){
+    errorBox.textContent = err.message;
+    errorBox.classList.add("visible");
+  }
+});
+
+/* ============================================================
+   LOGOUT
+   ============================================================ */
+document.getElementById("btn-logout").addEventListener("click", cerrarSesion);
+
+/* ============================================================
+   NAVEGACIÓN ENTRE SECCIONES
+   ============================================================ */
+document.querySelectorAll("nav.menu button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav.menu button").forEach(b => b.classList.remove("activo"));
+    btn.classList.add("activo");
+
+    document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
+    const seccion = document.getElementById("seccion-" + btn.dataset.vista);
+    if (seccion) seccion.style.display = "block";
+
+    if (btn.dataset.vista === "resumen") cargarResumen();
+  });
+});
+
+/* ============================================================
+   RESUMEN — GET /doctor/{id}/pacientes-atendidos
+   ============================================================ */
+async function cargarResumen(){
+  const doctor = obtenerDoctor();
+  if (!doctor) return;
+
+  const contPacientes = document.getElementById("tabla-pacientes-contenedor");
+  const contDiag = document.getElementById("tabla-diagnosticos-contenedor");
+  const contOrdenes = document.getElementById("tabla-ordenes-contenedor");
+
+  try{
+    const data = await apiFetch(`/doctor/${doctor.doctor_id}/pacientes-atendidos`);
+
+    document.getElementById("badge-pacientes").textContent = data.total_pacientes;
+    document.getElementById("badge-diagnosticos").textContent = data.total_diagnosticos;
+    document.getElementById("badge-ordenes").textContent = data.total_ordenes;
+
+    // Tabla de pacientes asignados
+    if (data.pacientes_asignados.length === 0){
+      contPacientes.innerHTML = '<p class="vacio">Sin pacientes asignados.</p>';
+    }else{
+      contPacientes.innerHTML = `
+        <table class="tabla-pacientes">
+          <thead><tr><th>Paciente ID</th><th>Fecha de asignación</th></tr></thead>
+          <tbody>
+            ${data.pacientes_asignados.map(p => `
+              <tr><td>${p.paciente_id}</td><td>${p.fecha_asignacion}</td></tr>
+            `).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    // Tabla de diagnósticos
+    if (data.diagnosticos_emitidos.length === 0){
+      contDiag.innerHTML = '<p class="vacio">Aún no has registrado diagnósticos.</p>';
+    }else{
+      contDiag.innerHTML = `
+        <table class="tabla-pacientes">
+          <thead><tr><th>Paciente</th><th>Diagnóstico</th><th>CIE-10</th><th>Gravedad</th><th>Fecha</th></tr></thead>
+          <tbody>
+            ${data.diagnosticos_emitidos.map(d => `
+              <tr>
+                <td>${d.paciente_id}</td>
+                <td>${d.nombre_diagnostico}</td>
+                <td>${d.codigo_cie || "—"}</td>
+                <td>${d.gravedad}</td>
+                <td>${d.fecha}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    // Tabla de órdenes
+    if (data.ordenes_emitidas.length === 0){
+      contOrdenes.innerHTML = '<p class="vacio">Aún no has emitido órdenes médicas.</p>';
+    }else{
+      contOrdenes.innerHTML = `
+        <table class="tabla-pacientes">
+          <thead><tr><th>Paciente</th><th>Tipo</th><th>Estado</th><th>Vence</th></tr></thead>
+          <tbody>
+            ${data.ordenes_emitidas.map(o => `
+              <tr>
+                <td>${o.paciente_id}</td>
+                <td>${o.tipo}</td>
+                <td>${o.estado}</td>
+                <td>${o.vencimiento}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>`;
+    }
+
+  }catch(err){
+    contPacientes.innerHTML = `<p class="vacio">${err.message}</p>`;
+    contDiag.innerHTML = "";
+    contOrdenes.innerHTML = "";
+  }
+}
+
+/* ============================================================
+   FUNCIÓN GENÉRICA PARA MOSTRAR RESULTADOS
+   ============================================================ */
+function mostrarResultado(idElemento, contenido, esError = false){
+  const box = document.getElementById(idElemento);
+  box.textContent = typeof contenido === "string" ? contenido : JSON.stringify(contenido, null, 2);
+  box.classList.add("visible");
+  box.classList.toggle("error", esError);
+}
+
+/* ============================================================
+   FORMULARIO: DIAGNÓSTICO — POST /doctor/diagnostico
+   ============================================================ */
+document.getElementById("form-diagnostico").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const doctor = obtenerDoctor();
+  const form = e.target;
+
+  const body = {
+    paciente_id: Number(form.paciente_id.value),
+    doctor_id: doctor.doctor_id,
+    codigo_cie: form.codigo_cie.value || null,
+    nombre_diagnostico: form.nombre_diagnostico.value,
+    descripcion: form.descripcion.value || null,
+    gravedad: form.gravedad.value
+  };
+
+  try{
+    const data = await apiFetch("/doctor/diagnostico", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    mostrarResultado("resultado-diagnostico", data);
+    form.reset();
+  }catch(err){
+    mostrarResultado("resultado-diagnostico", err.message, true);
+  }
+});
+
+/* ============================================================
+   FORMULARIO: ORDEN MÉDICA — POST /doctor/orden-medica
+   ============================================================ */
+document.getElementById("form-orden").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const doctor = obtenerDoctor();
+  const form = e.target;
+
+  const body = {
+    paciente_id: Number(form.paciente_id.value),
+    doctor_id: doctor.doctor_id,
+    tipo_orden: form.tipo_orden.value,
+    detalle: form.detalle.value,
+    fecha_vencimiento: form.fecha_vencimiento.value
+  };
+
+  try{
+    const data = await apiFetch("/doctor/orden-medica", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    mostrarResultado("resultado-orden", data);
+    form.reset();
+  }catch(err){
+    mostrarResultado("resultado-orden", err.message, true);
+  }
+});
+
+/* ============================================================
+   FORMULARIO: RECETA — POST /doctor/receta
+   ============================================================ */
+document.getElementById("form-receta").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const doctor = obtenerDoctor();
+  const form = e.target;
+
+  const body = {
+    paciente_id: Number(form.paciente_id.value),
+    doctor_id: doctor.doctor_id,
+    orden_medica_id: form.orden_medica_id.value ? Number(form.orden_medica_id.value) : null,
+    medicamento: form.medicamento.value,
+    dosis: form.dosis.value || null,
+    duracion: form.duracion.value || null,
+    indicaciones: form.indicaciones.value || null,
+    fecha_vencimiento: form.fecha_vencimiento.value || null
+  };
+
+  try{
+    const data = await apiFetch("/doctor/receta", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    mostrarResultado("resultado-receta", data);
+    form.reset();
+  }catch(err){
+    mostrarResultado("resultado-receta", err.message, true);
+  }
+});
+
+/* ============================================================
+   FORMULARIO: CONSULTAR PACIENTE — GET /doctor/consulta-paciente
+   ============================================================ */
+document.getElementById("form-consulta").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const doctor = obtenerDoctor();
+  const form = e.target;
+  const pacienteId = form.paciente_id.value;
+
+  try{
+    const data = await apiFetch(`/doctor/consulta-paciente?paciente_id=${pacienteId}&doctor_id=${doctor.doctor_id}`);
+    mostrarResultado("resultado-consulta", data);
+  }catch(err){
+    mostrarResultado("resultado-consulta", err.message, true);
+  }
+});
+
+/* ============================================================
+   FORMULARIO: RECETAS DE PACIENTE — GET /doctor/recetas-paciente
+   ============================================================ */
+document.getElementById("form-recetas-paciente").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const doctor = obtenerDoctor();
+  const form = e.target;
+  const pacienteId = form.paciente_id.value;
+  const estado = form.estado.value;
+
+  let ruta = `/doctor/recetas-paciente?paciente_id=${pacienteId}&doctor_id=${doctor.doctor_id}`;
+  if (estado) ruta += `&estado=${estado}`;
+
+  try{
+    const data = await apiFetch(ruta);
+    mostrarResultado("resultado-recetas-paciente", data);
+  }catch(err){
+    mostrarResultado("resultado-recetas-paciente", err.message, true);
+  }
+});
+
+/* ============================================================
+   NUEVO: TOAST DE NOTIFICACIÓN
+   ============================================================ */
+function mostrarToast(mensaje, esError = false){
+  const toast = document.getElementById("toast");
+  toast.textContent = mensaje;
+  toast.classList.toggle("error", esError);
+  toast.classList.add("show");
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+}
+
+/* ============================================================
+   NUEVO: CONFIGURACIÓN — URLs base guardadas en localStorage
+   ============================================================ */
+const CLAVE_BASE_DOCTOR = "ecosalud_base_doctor";
+const CLAVE_BASE_CITAS  = "ecosalud_base_citas";
+
+function obtenerBaseCitas(){
+  return localStorage.getItem(CLAVE_BASE_CITAS) || "https://api-clinica-soa.onrender.com";
+}
+
+function guardarConfigDoctor(){
+  const valor = document.getElementById("config-base-doctor").value.trim().replace(/\/$/, "");
+  localStorage.setItem(CLAVE_BASE_DOCTOR, valor);
+  mostrarResultado("resultado-config-doctor", { mensaje: "URL guardada", url: valor || "(mismo origen)" });
+  mostrarToast("URL del ServicioDoctor guardada");
+}
+
+function guardarConfigCitas(){
+  const valor = document.getElementById("config-base-citas").value.trim().replace(/\/$/, "");
+  localStorage.setItem(CLAVE_BASE_CITAS, valor);
+  mostrarResultado("resultado-config-citas", { mensaje: "URL guardada", url: valor });
+  mostrarToast("URL del ServicioClinicas guardada");
+}
+
+async function probarConexionDoctor(){
+  const base = obtenerBaseDoctorUrl();
+  try{
+    // /docs siempre existe en un servicio FastAPI activo
+    await fetch((base || "") + "/docs", { method: "GET" });
+    mostrarResultado("resultado-config-doctor", { estado: "Conexión exitosa", url: base || "(mismo origen)" });
+    mostrarToast("Conexión exitosa con ServicioDoctor");
+  }catch(err){
+    mostrarResultado("resultado-config-doctor", { estado: "No se pudo conectar", error: err.message }, true);
+    mostrarToast("Sin conexión con ServicioDoctor", true);
+  }
+}
+
+// Precargar los campos de configuración con lo guardado
+document.getElementById("config-base-doctor").value = obtenerBaseDoctorUrl();
+document.getElementById("config-base-citas").value = obtenerBaseCitas();
+
+/* ============================================================
+   NUEVO: VER CITAS — GET /clinica/citas/{fecha}
+   Este endpoint pertenece a OTRO microservicio (ServicioClinicas)
+   y NO requiere el token JWT de ServicioDoctor
+   ============================================================ */
+function estadoBadgeCita(estado){
+  if (!estado) return "—";
+  return `<span class="estado-badge estado-${estado}">${estado}</span>`;
+}
+
+document.getElementById("form-citas").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fecha = e.target.fecha.value;
+  const base  = obtenerBaseCitas();
+
+  const areaResultado = document.getElementById("citas-resultado-area");
+  const tbody = document.getElementById("citas-tbody");
+  areaResultado.style.display = "none";
+
+  try{
+    // Llamada SIN Authorization: es el contrato de otro servicio
+    const resp = await fetch(`${base}/clinica/citas/${fecha}`);
+    const data = await resp.json();
+
+    if (!resp.ok){
+      throw new Error(data.detail ? JSON.stringify(data.detail) : `Error HTTP ${resp.status}`);
+    }
+
+    if (!data || data.length === 0){
+      tbody.innerHTML = `<tr><td colspan="7" class="vacio">No existen citas para la fecha seleccionada.</td></tr>`;
+    }else{
+      tbody.innerHTML = data.map(c => `
+        <tr>
+          <td>${c.id}</td>
+          <td>${c.paciente_id}</td>
+          <td>${c.doctor_id}</td>
+          <td>${new Date(c.fecha_hora).toLocaleString()}</td>
+          <td>${c.duracion_minutos} min</td>
+          <td>${c.motivo || "—"}</td>
+          <td>${estadoBadgeCita(c.estado)}</td>
+        </tr>
+      `).join("");
+    }
+
+    areaResultado.style.display = "block";
+    mostrarResultado("resultado-citas", { total_citas: data.length || 0 });
+    mostrarToast(`${data.length || 0} cita(s) encontradas`);
+
+  }catch(err){
+    mostrarResultado("resultado-citas", err.message, true);
+    mostrarToast("Error al consultar citas", true);
+  }
+});
+
+/* ============================================================
+   INICIO: ¿hay sesión guardada?
+   ============================================================ */
+if (obtenerToken() && obtenerDoctor()){
+  mostrarPanel();
+}else{
+  mostrarLogin();
+}
+</script>
+
+</body>
+</html>
