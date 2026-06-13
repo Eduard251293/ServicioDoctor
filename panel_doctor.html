@@ -344,6 +344,12 @@
   .metodo-GET{ background:var(--primary-soft); color:var(--primary-dark); }
   .metodo-POST{ background:#fef3c7; color:#92400e; }
 
+  /* NUEVO: botones de acción dentro de tablas (más compactos) */
+  .tabla-pacientes button{
+    padding:6px 12px;
+    font-size:12px;
+  }
+
   /* ============================================================
      NUEVO: Toast de notificación
      ============================================================ */
@@ -420,7 +426,6 @@
 
     <nav class="menu">
       <button data-vista="resumen" class="activo">Resumen</button>
-      <button data-vista="diagnostico">Diagnóstico</button>
       <button data-vista="orden">Orden médica</button>
       <button data-vista="receta">Receta</button>
       <button data-vista="consulta">Consultar paciente</button>
@@ -614,7 +619,7 @@
             <thead>
               <tr>
                 <th>ID</th><th>Paciente</th><th>Doctor</th>
-                <th>Fecha/Hora</th><th>Duración</th><th>Motivo</th><th>Estado</th>
+                <th>Fecha/Hora</th><th>Duración</th><th>Motivo</th><th>Estado</th><th>Acciones</th>
               </tr>
             </thead>
             <tbody id="citas-tbody"></tbody>
@@ -666,7 +671,6 @@
             <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/{id}/pacientes-atendidos</td><td>Pacientes del doctor</td><td>JWT</td></tr>
             <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/consulta-paciente</td><td>Consulta clínica por paciente</td><td>JWT</td></tr>
             <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/recetas-paciente</td><td>Recetas de un paciente</td><td>JWT</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/doctores</td><td>Datos de doctores</td><td>JWT</td></tr>
             <tr><td><span class="metodo metodo-GET">GET</span></td><td>/clinica/citas/{fecha}</td><td>Citas por fecha (otro servicio)</td><td>—</td></tr>
           </tbody>
         </table>
@@ -818,17 +822,35 @@ document.getElementById("btn-logout").addEventListener("click", cerrarSesion);
 /* ============================================================
    NAVEGACIÓN ENTRE SECCIONES
    ============================================================ */
-document.querySelectorAll("nav.menu button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll("nav.menu button").forEach(b => b.classList.remove("activo"));
-    btn.classList.add("activo");
-
-    document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
-    const seccion = document.getElementById("seccion-" + btn.dataset.vista);
-    if (seccion) seccion.style.display = "block";
-
-    if (btn.dataset.vista === "resumen") cargarResumen();
+// Función reutilizable: cambia de sección por nombre (ej: "resumen", "diagnostico")
+// activarBotonMenu: si la sección tiene un botón visible en el menú lateral,
+// lo marca como activo. "diagnostico" ya no está en el menú, así que se omite.
+function irASeccion(nombreVista){
+  document.querySelectorAll("nav.menu button").forEach(b => {
+    b.classList.toggle("activo", b.dataset.vista === nombreVista);
   });
+
+  document.querySelectorAll(".seccion").forEach(s => s.style.display = "none");
+  const seccion = document.getElementById("seccion-" + nombreVista);
+  if (seccion) seccion.style.display = "block";
+
+  if (nombreVista === "resumen") cargarResumen();
+}
+
+// ── NUEVO: ir a Diagnóstico precargando el paciente de una cita ──────────────
+// Se llama desde el botón "Diagnóstico" de cada fila en "Ver citas"
+function irADiagnosticoDesdeCita(pacienteId){
+  irASeccion("diagnostico");
+
+  // Precargar el campo paciente_id del formulario de diagnóstico
+  const form = document.getElementById("form-diagnostico");
+  if (form && form.paciente_id){
+    form.paciente_id.value = pacienteId;
+  }
+}
+
+document.querySelectorAll("nav.menu button").forEach(btn => {
+  btn.addEventListener("click", () => irASeccion(btn.dataset.vista));
 });
 
 /* ============================================================
@@ -1130,7 +1152,7 @@ document.getElementById("form-citas").addEventListener("submit", async (e) => {
     }
 
     if (!data || data.length === 0){
-      tbody.innerHTML = `<tr><td colspan="7" class="vacio">No existen citas para la fecha seleccionada.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="vacio">No existen citas para la fecha seleccionada.</td></tr>`;
     }else{
       tbody.innerHTML = data.map(c => `
         <tr>
@@ -1141,6 +1163,11 @@ document.getElementById("form-citas").addEventListener("submit", async (e) => {
           <td>${c.duracion_minutos} min</td>
           <td>${c.motivo || "—"}</td>
           <td>${estadoBadgeCita(c.estado)}</td>
+          <td>
+            <button type="button" class="btn-secundario" onclick="irADiagnosticoDesdeCita(${c.paciente_id})">
+              Diagnóstico
+            </button>
+          </td>
         </tr>
       `).join("");
     }
