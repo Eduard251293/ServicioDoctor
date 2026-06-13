@@ -432,6 +432,23 @@
       <button data-vista="config">Configuración API</button>
     </nav>
 
+    <!-- ============================================================
+         NUEVO: Atención en curso
+         Aparece cuando se inicia un flujo desde "Ver citas" y se
+         mantiene visible en TODAS las secciones, incluso tras
+         recargar la página (se guarda en localStorage)
+         ============================================================ -->
+    <div class="doctor-card" id="atencion-actual" style="display:none; margin-top:auto;">
+      <p class="especialidad" style="margin-bottom:6px;">Atención en curso</p>
+      <p class="nombre" id="atencion-paciente-id" style="font-size:14px;">Paciente —</p>
+      <div class="fila" style="margin-top:10px; gap:8px;">
+        <button type="button" class="btn-secundario" style="padding:6px 10px; font-size:12px;" onclick="irASeccionAtencion('diagnostico')">Diagnóstico</button>
+        <button type="button" class="btn-secundario" style="padding:6px 10px; font-size:12px;" onclick="irASeccionAtencion('orden')">Orden</button>
+        <button type="button" class="btn-secundario" style="padding:6px 10px; font-size:12px;" onclick="irASeccionAtencion('receta')">Receta</button>
+      </div>
+      <button type="button" class="btn-secundario" style="margin-top:8px; width:100%;" onclick="finalizarAtencion()">Finalizar atención</button>
+    </div>
+
     <button id="btn-logout" class="btn-secundario" style="margin-top:16px;">Cerrar sesión</button>
   </aside>
 
@@ -729,6 +746,7 @@ function obtenerDoctor(){
 function cerrarSesion(){
   localStorage.removeItem("ecosalud_token");
   localStorage.removeItem("ecosalud_doctor");
+  localStorage.removeItem("ecosalud_atencion_paciente"); // NUEVO
   mostrarLogin();
 }
 
@@ -785,6 +803,9 @@ function mostrarPanel(){
   document.getElementById("info-nombre").textContent = doctor.nombre;
   document.getElementById("info-especialidad").textContent = doctor.especialidad;
   document.getElementById("info-colegiatura").textContent = doctor.numero_colegiatura;
+
+  // NUEVO: restaurar el widget "Atención en curso" si había una activa
+  actualizarWidgetAtencion();
 
   cargarResumen();
 }
@@ -845,43 +866,71 @@ function irASeccion(nombreVista){
   if (nombreVista === "resumen") cargarResumen();
 }
 
-// ── NUEVO: ir a Diagnóstico precargando el paciente de una cita ──────────────
-// Se llama desde el botón "Diagnóstico" de cada fila en "Ver citas"
-function irADiagnosticoDesdeCita(pacienteId){
-  irASeccion("diagnostico");
+/* ============================================================
+   NUEVO: ATENCIÓN EN CURSO
+   Mantiene el paciente seleccionado disponible en TODAS las
+   secciones, hasta que el doctor finalice la atención.
+   Se guarda en localStorage para sobrevivir a recargas.
+   ============================================================ */
+const CLAVE_ATENCION = "ecosalud_atencion_paciente";
 
-  // Precargar el campo paciente_id del formulario de diagnóstico
-  const form = document.getElementById("form-diagnostico");
-  if (form && form.paciente_id){
+function iniciarAtencion(pacienteId){
+  localStorage.setItem(CLAVE_ATENCION, pacienteId);
+  actualizarWidgetAtencion();
+}
+
+function finalizarAtencion(){
+  localStorage.removeItem(CLAVE_ATENCION);
+  actualizarWidgetAtencion();
+  irASeccion("resumen");
+}
+
+function obtenerPacienteAtencion(){
+  const valor = localStorage.getItem(CLAVE_ATENCION);
+  return valor ? Number(valor) : null;
+}
+
+function actualizarWidgetAtencion(){
+  const pacienteId = obtenerPacienteAtencion();
+  const widget = document.getElementById("atencion-actual");
+
+  if (pacienteId){
+    widget.style.display = "block";
+    document.getElementById("atencion-paciente-id").textContent = `Paciente #${pacienteId}`;
+  }else{
+    widget.style.display = "none";
+  }
+}
+
+// Navega a diagnóstico/orden/receta precargando el paciente en atención
+function irASeccionAtencion(nombreVista){
+  const pacienteId = obtenerPacienteAtencion();
+  irASeccion(nombreVista);
+
+  const form = document.getElementById("form-" + nombreVista);
+  if (form && form.paciente_id && pacienteId){
     form.paciente_id.value = pacienteId;
   }
+}
 
-  // Ocultar resultados/botones de continuidad de un diagnóstico anterior
-  document.getElementById("diagnostico-continuar").style.display = "none";
+// ── Ir a Diagnóstico precargando el paciente de una cita ─────────────────────
+// Se llama desde el botón "Diagnóstico" de cada fila en "Ver citas"
+function irADiagnosticoDesdeCita(pacienteId){
+  iniciarAtencion(pacienteId);
+  irASeccionAtencion("diagnostico");
+
+  // Ocultar resultados de un diagnóstico anterior
   document.getElementById("resultado-diagnostico").classList.remove("visible");
 }
 
-// ── NUEVO: continuar el flujo desde Diagnóstico hacia Orden médica ───────────
-// Usa el paciente_id guardado tras registrar el diagnóstico exitosamente
+// ── Continuar el flujo desde Diagnóstico hacia Orden médica ──────────────────
 function irAOrdenDesdeDiagnostico(){
-  const pacienteId = window._pacienteEnCurso;
-  irASeccion("orden");
-
-  const form = document.getElementById("form-orden");
-  if (form && form.paciente_id && pacienteId){
-    form.paciente_id.value = pacienteId;
-  }
+  irASeccionAtencion("orden");
 }
 
-// ── NUEVO: continuar el flujo desde Diagnóstico hacia Receta ─────────────────
+// ── Continuar el flujo desde Diagnóstico hacia Receta ────────────────────────
 function irARecetaDesdeDiagnostico(){
-  const pacienteId = window._pacienteEnCurso;
-  irASeccion("receta");
-
-  const form = document.getElementById("form-receta");
-  if (form && form.paciente_id && pacienteId){
-    form.paciente_id.value = pacienteId;
-  }
+  irASeccionAtencion("receta");
 }
 
 document.querySelectorAll("nav.menu button").forEach(btn => {
