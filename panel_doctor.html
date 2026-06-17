@@ -402,6 +402,35 @@
     color:var(--ink-soft);
     cursor:not-allowed;
   }
+
+  /* ============================================================
+     NUEVO: Tarjeta "Atendiendo a" (paciente vinculado desde una cita)
+     ============================================================ */
+  .paciente-activo{
+    background:var(--primary-soft);
+    border-radius:10px;
+    padding:12px 16px;
+    margin-bottom:18px;
+  }
+  .paciente-activo .pa-label{
+    font-size:11px;
+    color:var(--primary-dark);
+    margin:0 0 2px;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+  }
+  .paciente-activo .pa-nombre{
+    font-family:var(--font-display);
+    font-size:16px;
+    font-weight:600;
+    color:var(--ink);
+    margin:0;
+  }
+  .paciente-activo .pa-meta{
+    font-size:12px;
+    color:var(--primary-dark);
+    margin:2px 0 0;
+  }
 </style>
 </head>
 <body>
@@ -520,14 +549,10 @@
       <p class="subtitulo">POST /doctor/diagnostico</p>
       <div class="card">
         <form id="form-diagnostico">
-          <!-- NUEVO: Buscar paciente por DNI -->
-          <div class="buscador-dni" data-form="form-diagnostico">
-            <label>Buscar paciente por DNI</label>
-            <div class="fila">
-              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
-              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
-            </div>
-            <div class="paciente-encontrado" style="display:none;"></div>
+          <!-- NUEVO: Paciente proviene de la cita seleccionada (sin buscador) -->
+          <div class="paciente-activo" id="paciente-activo-diagnostico">
+            <p class="pa-label">Atendiendo a</p>
+            <p class="pa-nombre">—</p>
           </div>
 
           <div class="fila">
@@ -575,14 +600,10 @@
       <p class="subtitulo">POST /doctor/orden-medica</p>
       <div class="card">
         <form id="form-orden">
-          <!-- NUEVO: Buscar paciente por DNI -->
-          <div class="buscador-dni" data-form="form-orden">
-            <label>Buscar paciente por DNI</label>
-            <div class="fila">
-              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
-              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
-            </div>
-            <div class="paciente-encontrado" style="display:none;"></div>
+          <!-- NUEVO: Paciente proviene del flujo de atención en curso -->
+          <div class="paciente-activo" id="paciente-activo-orden">
+            <p class="pa-label">Atendiendo a</p>
+            <p class="pa-nombre">—</p>
           </div>
 
           <div class="fila">
@@ -616,14 +637,10 @@
       <p class="subtitulo">POST /doctor/receta</p>
       <div class="card">
         <form id="form-receta">
-          <!-- NUEVO: Buscar paciente por DNI -->
-          <div class="buscador-dni" data-form="form-receta">
-            <label>Buscar paciente por DNI</label>
-            <div class="fila">
-              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
-              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
-            </div>
-            <div class="paciente-encontrado" style="display:none;"></div>
+          <!-- NUEVO: Paciente proviene del flujo de atención en curso -->
+          <div class="paciente-activo" id="paciente-activo-receta">
+            <p class="pa-label">Atendiendo a</p>
+            <p class="pa-nombre">—</p>
           </div>
 
           <div class="fila">
@@ -633,7 +650,7 @@
             </div>
             <div>
               <label>Orden médica ID (opcional)</label>
-              <input type="number" name="orden_medica_id" />
+              <input type="number" name="orden_medica_id" readonly placeholder="Se completa automáticamente" />
             </div>
           </div>
           <label>Medicamento</label>
@@ -926,7 +943,8 @@ function obtenerDoctor(){
 function cerrarSesion(){
   localStorage.removeItem("ecosalud_token");
   localStorage.removeItem("ecosalud_doctor");
-  localStorage.removeItem("ecosalud_atencion_paciente"); // NUEVO
+  localStorage.removeItem("ecosalud_atencion_paciente");
+  localStorage.removeItem("ecosalud_ultima_orden_id"); // NUEVO
   mostrarLogin();
 }
 
@@ -1048,59 +1066,91 @@ function irASeccion(nombreVista){
 
 /* ============================================================
    NUEVO: ATENCIÓN EN CURSO
-   Mantiene el paciente seleccionado disponible en TODAS las
-   secciones, hasta que el doctor finalice la atención.
+   Mantiene el paciente seleccionado (ID + nombre) disponible en
+   TODAS las secciones, hasta que el doctor finalice la atención.
    Se guarda en localStorage para sobrevivir a recargas.
    ============================================================ */
-const CLAVE_ATENCION = "ecosalud_atencion_paciente";
+const CLAVE_ATENCION = "ecosalud_atencion_paciente"; // { id, nombre }
 
-function iniciarAtencion(pacienteId){
-  localStorage.setItem(CLAVE_ATENCION, pacienteId);
+function iniciarAtencion(pacienteId, nombrePaciente){
+  localStorage.setItem(CLAVE_ATENCION, JSON.stringify({
+    id: pacienteId,
+    nombre: nombrePaciente || null
+  }));
   actualizarWidgetAtencion();
 }
 
 function finalizarAtencion(){
   localStorage.removeItem(CLAVE_ATENCION);
+  localStorage.removeItem("ecosalud_ultima_orden_id"); // NUEVO
   actualizarWidgetAtencion();
   irASeccion("resumen");
 }
 
 function obtenerPacienteAtencion(){
   const valor = localStorage.getItem(CLAVE_ATENCION);
-  return valor ? Number(valor) : null;
+  if (!valor) return null;
+  try{
+    return JSON.parse(valor);
+  }catch{
+    return null;
+  }
 }
 
+// Actualiza el widget del sidebar Y las tarjetas "Atendiendo a"
+// dentro de Diagnóstico / Orden médica / Receta
 function actualizarWidgetAtencion(){
-  const pacienteId = obtenerPacienteAtencion();
+  const atencion = obtenerPacienteAtencion();
   const widget = document.getElementById("atencion-actual");
+  const textoMostrar = atencion
+    ? (atencion.nombre ? atencion.nombre : `Paciente #${atencion.id}`)
+    : null;
 
-  if (pacienteId){
+  if (atencion){
     widget.style.display = "block";
-    document.getElementById("atencion-paciente-id").textContent = `Paciente #${pacienteId}`;
+    document.getElementById("atencion-paciente-id").textContent = textoMostrar;
   }else{
     widget.style.display = "none";
   }
+
+  // Tarjetas "Atendiendo a" en cada formulario del flujo
+  ["diagnostico", "orden", "receta"].forEach(vista => {
+    const tarjeta = document.getElementById(`paciente-activo-${vista}`);
+    if (!tarjeta) return;
+    const nombreEl = tarjeta.querySelector(".pa-nombre");
+    nombreEl.textContent = textoMostrar || "Sin paciente seleccionado";
+  });
 }
 
 // Navega a diagnóstico/orden/receta precargando el paciente en atención
 function irASeccionAtencion(nombreVista){
-  const pacienteId = obtenerPacienteAtencion();
+  const atencion = obtenerPacienteAtencion();
   irASeccion(nombreVista);
 
   const form = document.getElementById("form-" + nombreVista);
-  if (form && form.paciente_id && pacienteId){
-    form.paciente_id.value = pacienteId;
+  if (form && form.paciente_id && atencion){
+    form.paciente_id.value = atencion.id;
+  }
+
+  // NUEVO: si vamos a Receta, autocompletar el ID de la última orden creada
+  if (nombreVista === "receta" && form && form.orden_medica_id){
+    const ultimaOrden = localStorage.getItem("ecosalud_ultima_orden_id");
+    if (ultimaOrden) form.orden_medica_id.value = ultimaOrden;
   }
 }
 
 // ── Ir a Diagnóstico precargando el paciente de una cita ─────────────────────
-// Se llama desde el botón "Diagnóstico" de cada fila en "Ver citas"
-function irADiagnosticoDesdeCita(pacienteId){
-  iniciarAtencion(pacienteId);
+// Se llama desde el botón "Diagnóstico" de cada fila en "Ver citas".
+// botonOrigen: el <button> que disparó la acción, usado para leer el
+// nombre del paciente que ya se resolvió en la tabla (data-paciente-nombre).
+function irADiagnosticoDesdeCita(pacienteId, botonOrigen){
+  const nombre = botonOrigen?.dataset?.pacienteNombre || null;
+  iniciarAtencion(pacienteId, nombre);
   irASeccionAtencion("diagnostico");
 
   // Ocultar resultados de un diagnóstico anterior
   document.getElementById("resultado-diagnostico").classList.remove("visible");
+  document.getElementById("diagnostico-continuar").style.display = "none";
 }
 
 // ── Continuar el flujo desde Diagnóstico hacia Orden médica ──────────────────
@@ -1244,11 +1294,16 @@ document.getElementById("form-diagnostico").addEventListener("submit", async (e)
     });
     mostrarResultado("resultado-diagnostico", data);
 
-    // NUEVO: guardamos el paciente para continuar el flujo y mostramos los botones
-    window._pacienteEnCurso = body.paciente_id;
+    // Muestra los botones de continuidad (Orden médica / Receta)
+    // El paciente en atención ya quedó guardado desde "Ver citas"
     document.getElementById("diagnostico-continuar").style.display = "flex";
 
-    limpiarFormularioYBuscador(form);
+    // Solo limpiamos los campos del diagnóstico, no el paciente_id
+    // (el paciente sigue siendo el mismo durante toda la atención)
+    form.codigo_cie.value = "";
+    form.nombre_diagnostico.value = "";
+    form.descripcion.value = "";
+    form.gravedad.value = "LEVE";
   }catch(err){
     mostrarResultado("resultado-diagnostico", err.message, true);
     document.getElementById("diagnostico-continuar").style.display = "none";
@@ -1277,7 +1332,15 @@ document.getElementById("form-orden").addEventListener("submit", async (e) => {
       body: JSON.stringify(body)
     });
     mostrarResultado("resultado-orden", data);
-    limpiarFormularioYBuscador(form);
+
+    // NUEVO: guarda el ID de la orden recién creada para autocompletarlo
+    // en el formulario de Receta (campo "Orden médica ID")
+    localStorage.setItem("ecosalud_ultima_orden_id", data.id);
+
+    // Limpia el formulario pero conserva el paciente en atención
+    form.tipo_orden.value = "LABORATORIO";
+    form.detalle.value = "";
+    form.fecha_vencimiento.value = "";
   }catch(err){
     mostrarResultado("resultado-orden", err.message, true);
   }
@@ -1308,7 +1371,14 @@ document.getElementById("form-receta").addEventListener("submit", async (e) => {
       body: JSON.stringify(body)
     });
     mostrarResultado("resultado-receta", data);
-    limpiarFormularioYBuscador(form);
+
+    // Limpia el formulario pero conserva paciente_id y orden_medica_id
+    // (puede emitir varias recetas de la misma orden/atención)
+    form.medicamento.value = "";
+    form.dosis.value = "";
+    form.duracion.value = "";
+    form.indicaciones.value = "";
+    form.fecha_vencimiento.value = "";
   }catch(err){
     mostrarResultado("resultado-receta", err.message, true);
   }
@@ -1415,6 +1485,20 @@ function estadoBadgeCita(estado){
   return `<span class="estado-badge estado-${estado}">${estado}</span>`;
 }
 
+// NUEVO: busca el nombre completo de un paciente por su ID, usando la
+// misma lista cacheada de obtenerListaPacientes(). Si el ServicioPaciente
+// todavía exige token (401) u otro error, devuelve null silenciosamente
+// y la tabla muestra el ID como respaldo.
+async function resolverNombrePaciente(pacienteId){
+  try{
+    const pacientes = await obtenerListaPacientes();
+    const encontrado = pacientes.find(p => p.id === pacienteId);
+    return encontrado ? `${encontrado.nombres} ${encontrado.apellidos}` : null;
+  }catch(err){
+    return null;
+  }
+}
+
 document.getElementById("form-citas").addEventListener("submit", async (e) => {
   e.preventDefault();
   const fecha = e.target.fecha.value;
@@ -1436,22 +1520,38 @@ document.getElementById("form-citas").addEventListener("submit", async (e) => {
     if (!data || data.length === 0){
       tbody.innerHTML = `<tr><td colspan="8" class="vacio">No existen citas para la fecha seleccionada.</td></tr>`;
     }else{
+      // Pinta la tabla primero con el ID (respuesta inmediata)...
       tbody.innerHTML = data.map(c => `
-        <tr>
+        <tr data-cita-id="${c.id}">
           <td>${c.id}</td>
-          <td>${c.paciente_id}</td>
+          <td class="celda-paciente">Paciente #${c.paciente_id}</td>
           <td>${c.doctor_id}</td>
           <td>${new Date(c.fecha_hora).toLocaleString()}</td>
           <td>${c.duracion_minutos} min</td>
           <td>${c.motivo || "—"}</td>
           <td>${estadoBadgeCita(c.estado)}</td>
           <td>
-            <button type="button" class="btn-secundario" onclick="irADiagnosticoDesdeCita(${c.paciente_id})">
+            <button type="button" class="btn-secundario"
+              onclick="irADiagnosticoDesdeCita(${c.paciente_id}, this)">
               Diagnóstico
             </button>
           </td>
         </tr>
       `).join("");
+
+      // ...y luego reemplaza cada celda con el nombre real en cuanto llega
+      // (no bloquea el render de la tabla mientras se resuelve cada nombre)
+      data.forEach(async (c) => {
+        const nombre = await resolverNombrePaciente(c.paciente_id);
+        if (nombre){
+          const fila = tbody.querySelector(`tr[data-cita-id="${c.id}"] .celda-paciente`);
+          if (fila) fila.textContent = nombre;
+
+          // Guarda el nombre en el botón para usarlo al ir a Diagnóstico
+          const boton = tbody.querySelector(`tr[data-cita-id="${c.id}"] button`);
+          if (boton) boton.dataset.pacienteNombre = nombre;
+        }
+      });
     }
 
     areaResultado.style.display = "block";
