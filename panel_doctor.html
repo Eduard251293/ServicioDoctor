@@ -363,6 +363,45 @@
   }
   #toast.show{ transform:translateY(0); opacity:1; }
   #toast.error{ background:var(--danger); }
+
+  /* ============================================================
+     NUEVO: Buscador de paciente por DNI
+     ============================================================ */
+  .buscador-dni{
+    background:#f8fafc;
+    border:1px dashed var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:18px;
+  }
+  .buscador-dni label{ font-size:12px; color:var(--ink-soft); }
+  .buscador-dni .fila{ margin-bottom:0; }
+  .buscador-dni .fila > div{ margin-bottom:0; }
+  .buscador-dni input{ margin-bottom:0; }
+  .buscador-dni button{ height:38px; }
+
+  .paciente-encontrado{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:13px;
+  }
+  .paciente-encontrado.ok{
+    background:var(--primary-soft);
+    color:var(--primary-dark);
+  }
+  .paciente-encontrado.error{
+    background:var(--danger-soft);
+    color:var(--danger);
+  }
+  .paciente-encontrado .pe-nombre{ font-weight:600; margin-bottom:2px; }
+  .paciente-encontrado .pe-meta{ font-size:11px; opacity:.85; }
+
+  input[readonly]{
+    background:#f1f5f9;
+    color:var(--ink-soft);
+    cursor:not-allowed;
+  }
 </style>
 </head>
 <body>
@@ -481,14 +520,26 @@
       <p class="subtitulo">POST /doctor/diagnostico</p>
       <div class="card">
         <form id="form-diagnostico">
+          <!-- NUEVO: Buscar paciente por DNI -->
+          <div class="buscador-dni" data-form="form-diagnostico">
+            <label>Buscar paciente por DNI</label>
+            <div class="fila">
+              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
+              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
+            </div>
+            <div class="paciente-encontrado" style="display:none;"></div>
+          </div>
+
           <div class="fila">
             <div>
               <label>Paciente ID</label>
-              <input type="number" name="paciente_id" required />
+              <input type="number" name="paciente_id" required readonly />
             </div>
             <div>
               <label>Código CIE-10 (opcional)</label>
-              <input type="text" name="codigo_cie" placeholder="J06.9" />
+              <select name="codigo_cie" class="select-cie10">
+                <option value="">Seleccionar código CIE-10...</option>
+              </select>
             </div>
           </div>
           <label>Nombre del diagnóstico</label>
@@ -524,10 +575,20 @@
       <p class="subtitulo">POST /doctor/orden-medica</p>
       <div class="card">
         <form id="form-orden">
+          <!-- NUEVO: Buscar paciente por DNI -->
+          <div class="buscador-dni" data-form="form-orden">
+            <label>Buscar paciente por DNI</label>
+            <div class="fila">
+              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
+              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
+            </div>
+            <div class="paciente-encontrado" style="display:none;"></div>
+          </div>
+
           <div class="fila">
             <div>
               <label>Paciente ID</label>
-              <input type="number" name="paciente_id" required />
+              <input type="number" name="paciente_id" required readonly />
             </div>
             <div>
               <label>Tipo de orden</label>
@@ -555,10 +616,20 @@
       <p class="subtitulo">POST /doctor/receta</p>
       <div class="card">
         <form id="form-receta">
+          <!-- NUEVO: Buscar paciente por DNI -->
+          <div class="buscador-dni" data-form="form-receta">
+            <label>Buscar paciente por DNI</label>
+            <div class="fila">
+              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
+              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
+            </div>
+            <div class="paciente-encontrado" style="display:none;"></div>
+          </div>
+
           <div class="fila">
             <div>
               <label>Paciente ID</label>
-              <input type="number" name="paciente_id" required />
+              <input type="number" name="paciente_id" required readonly />
             </div>
             <div>
               <label>Orden médica ID (opcional)</label>
@@ -593,8 +664,18 @@
       <p class="subtitulo">GET /doctor/consulta-paciente</p>
       <div class="card">
         <form id="form-consulta">
+          <!-- NUEVO: Buscar paciente por DNI -->
+          <div class="buscador-dni" data-form="form-consulta">
+            <label>Buscar paciente por DNI</label>
+            <div class="fila">
+              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
+              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
+            </div>
+            <div class="paciente-encontrado" style="display:none;"></div>
+          </div>
+
           <label>Paciente ID</label>
-          <input type="number" name="paciente_id" required />
+          <input type="number" name="paciente_id" required readonly />
           <button type="submit" class="btn-primary">Consultar</button>
         </form>
         <div class="resultado" id="resultado-consulta"></div>
@@ -607,10 +688,20 @@
       <p class="subtitulo">GET /doctor/recetas-paciente</p>
       <div class="card">
         <form id="form-recetas-paciente">
+          <!-- NUEVO: Buscar paciente por DNI -->
+          <div class="buscador-dni" data-form="form-recetas-paciente">
+            <label>Buscar paciente por DNI</label>
+            <div class="fila">
+              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
+              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
+            </div>
+            <div class="paciente-encontrado" style="display:none;"></div>
+          </div>
+
           <div class="fila">
             <div>
               <label>Paciente ID</label>
-              <input type="number" name="paciente_id" required />
+              <input type="number" name="paciente_id" required readonly />
             </div>
             <div>
               <label>Estado (opcional)</label>
@@ -656,7 +747,7 @@
     <!-- ── NUEVO: Configuración API ── -->
     <section id="seccion-config" class="seccion" style="display:none;">
       <h2>Configuración</h2>
-      <p class="subtitulo">URL base del API ServicioDoctor / ServicioClinicas.</p>
+      <p class="subtitulo">URL base de cada servicio que consume este panel.</p>
 
       <div class="card">
         <h3>URL base del ServicioDoctor</h3>
@@ -683,21 +774,49 @@
         <div class="resultado" id="resultado-config-citas"></div>
       </div>
 
+      <!-- NUEVO: URL del ServicioPaciente (backend-ecosalud) -->
+      <div class="card">
+        <h3>URL base del ServicioPaciente</h3>
+        <p class="subtitulo" style="margin-bottom:10px;">
+          Usado para buscar pacientes por DNI desde los formularios (GET /pacientes).
+        </p>
+        <div class="config-fila">
+          <div>
+            <label>URL base</label>
+            <input type="text" id="config-base-paciente" placeholder="https://backend-ecosalud.onrender.com" />
+          </div>
+          <button type="button" class="btn-secundario" onclick="guardarConfigPaciente()">Guardar</button>
+          <button type="button" class="btn-secundario" onclick="probarConexionPaciente()">Probar conexión</button>
+        </div>
+        <div class="resultado" id="resultado-config-paciente"></div>
+      </div>
+
       <div class="card">
         <h3>Endpoints disponibles</h3>
         <table class="tabla-endpoints">
-          <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th></tr></thead>
+          <thead><tr><th>Método</th><th>Ruta</th><th>Descripción</th><th>Auth</th><th>Servicio</th></tr></thead>
           <tbody>
-            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/auth/login</td><td>Iniciar sesión</td><td>—</td></tr>
-            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/diagnostico</td><td>Emitir diagnóstico</td><td>JWT</td></tr>
-            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/orden-medica</td><td>Generar orden médica</td><td>JWT</td></tr>
-            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/receta</td><td>Emitir receta</td><td>JWT</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/{id}/pacientes-atendidos</td><td>Pacientes del doctor</td><td>JWT</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/consulta-paciente</td><td>Consulta clínica por paciente</td><td>JWT</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/recetas-paciente</td><td>Recetas de un paciente</td><td>JWT</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/clinica/citas/{fecha}</td><td>Citas por fecha (otro servicio)</td><td>—</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/auth/login</td><td>Iniciar sesión del doctor</td><td>—</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/auth/registro</td><td>Asignar credenciales a un doctor</td><td>—</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/diagnostico</td><td>Emitir diagnóstico</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/orden-medica</td><td>Generar orden médica (requiere diagnóstico previo)</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/receta</td><td>Emitir receta (requiere diagnóstico previo)</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/{id}/pacientes-atendidos</td><td>Pacientes del doctor</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/consulta-paciente</td><td>Consulta clínica por paciente</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/recetas-paciente</td><td>Recetas de un paciente</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctores</td><td>Listar doctores (consumo entre servicios)</td><td>—</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/clinica/citas/{fecha}</td><td>Citas por fecha</td><td>—</td><td>ServicioClinicas</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/pacientes</td><td>Listar pacientes (usado para buscar por DNI)</td><td id="auth-pacientes-cell">JWT*</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}</td><td>Detalle de un paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/historial-clinico</td><td>Historial clínico del paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/recetas</td><td>Recetas del paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/ordenes-medicas</td><td>Órdenes médicas del paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
           </tbody>
         </table>
+        <p class="subtitulo" style="margin-top:10px; margin-bottom:0;">
+          * En proceso: el equipo de ServicioPaciente está liberando estos endpoints de la
+          exigencia de token para que otros servicios puedan consumirlos directamente.
+        </p>
       </div>
     </section>
 
@@ -708,6 +827,68 @@
 <div id="toast"></div>
 
 <script>
+/* ============================================================
+   NUEVO: CATÁLOGO CIE-10 (códigos más usados en atención primaria)
+   Fuente de referencia: clasificación CIE-10 de la OMS.
+   Se usa para llenar el <select> de "Código CIE-10" y autocompletar
+   el campo "Nombre del diagnóstico" cuando el doctor elige un código.
+   ============================================================ */
+const CATALOGO_CIE10 = [
+  { codigo: "A09",   nombre: "Diarrea y gastroenteritis de presunto origen infeccioso" },
+  { codigo: "B34.9", nombre: "Infección viral, no especificada" },
+  { codigo: "E11",   nombre: "Diabetes mellitus tipo 2" },
+  { codigo: "E66.9", nombre: "Obesidad, no especificada" },
+  { codigo: "F32.9", nombre: "Episodio depresivo, no especificado" },
+  { codigo: "F41.1", nombre: "Trastorno de ansiedad generalizada" },
+  { codigo: "G43.9", nombre: "Migraña, no especificada" },
+  { codigo: "I10",   nombre: "Hipertensión esencial (primaria)" },
+  { codigo: "J00",   nombre: "Rinofaringitis aguda (resfriado común)" },
+  { codigo: "J02.9", nombre: "Faringitis aguda, no especificada" },
+  { codigo: "J03.9", nombre: "Amigdalitis aguda, no especificada" },
+  { codigo: "J06.9", nombre: "Infección aguda de las vías respiratorias superiores, no especificada (gripe común)" },
+  { codigo: "J18.9", nombre: "Neumonía, no especificada" },
+  { codigo: "J45.9", nombre: "Asma, no especificada" },
+  { codigo: "K29.7", nombre: "Gastritis, no especificada" },
+  { codigo: "K52.9", nombre: "Colitis y gastroenteritis no infecciosas, no especificadas" },
+  { codigo: "K59.0", nombre: "Constipación (estreñimiento)" },
+  { codigo: "L20.9", nombre: "Dermatitis atópica, no especificada" },
+  { codigo: "L30.9", nombre: "Dermatitis, no especificada" },
+  { codigo: "M54.5", nombre: "Lumbago no especificado (dolor lumbar)" },
+  { codigo: "M79.1", nombre: "Mialgia (dolor muscular)" },
+  { codigo: "N30.9", nombre: "Cistitis, no especificada (infección urinaria)" },
+  { codigo: "N39.0", nombre: "Infección de vías urinarias, sitio no especificado" },
+  { codigo: "R05",   nombre: "Tos" },
+  { codigo: "R06.0", nombre: "Disnea (dificultad para respirar)" },
+  { codigo: "R10.4", nombre: "Otros dolores abdominales y los no especificados" },
+  { codigo: "R50.9", nombre: "Fiebre, no especificada" },
+  { codigo: "R51",   nombre: "Cefalea (dolor de cabeza)" },
+  { codigo: "R53",   nombre: "Malestar y fatiga" },
+  { codigo: "T78.4", nombre: "Alergia, no especificada" },
+];
+
+// Llena todos los <select class="select-cie10"> que existan en la página
+function llenarSelectsCIE10(){
+  document.querySelectorAll(".select-cie10").forEach(select => {
+    CATALOGO_CIE10.forEach(item => {
+      const opt = document.createElement("option");
+      opt.value = item.codigo;
+      opt.textContent = `${item.codigo} — ${item.nombre}`;
+      select.appendChild(opt);
+    });
+
+    // Al elegir un código, autocompleta "Nombre del diagnóstico" del mismo formulario
+    select.addEventListener("change", () => {
+      const form = select.closest("form");
+      if (!form || !form.nombre_diagnostico) return;
+
+      const seleccionado = CATALOGO_CIE10.find(c => c.codigo === select.value);
+      if (seleccionado){
+        form.nombre_diagnostico.value = seleccionado.nombre;
+      }
+    });
+  });
+}
+
 /* ============================================================
    CONFIGURACIÓN
    ============================================================ */
@@ -1027,6 +1208,18 @@ function mostrarResultado(idElemento, contenido, esError = false){
   box.classList.toggle("error", esError);
 }
 
+// NUEVO: limpia un formulario Y su buscador de DNI asociado (si tiene)
+function limpiarFormularioYBuscador(form){
+  form.reset();
+  const widget = document.querySelector(`.buscador-dni[data-form="${form.id}"]`);
+  if (widget){
+    widget.querySelector(".input-dni").value = "";
+    const caja = widget.querySelector(".paciente-encontrado");
+    caja.style.display = "none";
+    caja.innerHTML = "";
+  }
+}
+
 /* ============================================================
    FORMULARIO: DIAGNÓSTICO — POST /doctor/diagnostico
    ============================================================ */
@@ -1055,7 +1248,7 @@ document.getElementById("form-diagnostico").addEventListener("submit", async (e)
     window._pacienteEnCurso = body.paciente_id;
     document.getElementById("diagnostico-continuar").style.display = "flex";
 
-    form.reset();
+    limpiarFormularioYBuscador(form);
   }catch(err){
     mostrarResultado("resultado-diagnostico", err.message, true);
     document.getElementById("diagnostico-continuar").style.display = "none";
@@ -1084,7 +1277,7 @@ document.getElementById("form-orden").addEventListener("submit", async (e) => {
       body: JSON.stringify(body)
     });
     mostrarResultado("resultado-orden", data);
-    form.reset();
+    limpiarFormularioYBuscador(form);
   }catch(err){
     mostrarResultado("resultado-orden", err.message, true);
   }
@@ -1115,7 +1308,7 @@ document.getElementById("form-receta").addEventListener("submit", async (e) => {
       body: JSON.stringify(body)
     });
     mostrarResultado("resultado-receta", data);
-    form.reset();
+    limpiarFormularioYBuscador(form);
   }catch(err){
     mostrarResultado("resultado-receta", err.message, true);
   }
@@ -1272,8 +1465,140 @@ document.getElementById("form-citas").addEventListener("submit", async (e) => {
 });
 
 /* ============================================================
+   NUEVO: CONFIGURACIÓN — URL del ServicioPaciente
+   ============================================================ */
+const CLAVE_BASE_PACIENTE = "ecosalud_base_paciente";
+
+function obtenerBasePaciente(){
+  return localStorage.getItem(CLAVE_BASE_PACIENTE) || "https://backend-ecosalud.onrender.com";
+}
+
+function guardarConfigPaciente(){
+  const valor = document.getElementById("config-base-paciente").value.trim().replace(/\/$/, "");
+  localStorage.setItem(CLAVE_BASE_PACIENTE, valor);
+  mostrarResultado("resultado-config-paciente", { mensaje: "URL guardada", url: valor });
+  mostrarToast("URL del ServicioPaciente guardada");
+}
+
+async function probarConexionPaciente(){
+  const base = obtenerBasePaciente();
+  try{
+    await fetch(base + "/docs", { method: "GET" });
+    mostrarResultado("resultado-config-paciente", { estado: "Conexión exitosa", url: base });
+    mostrarToast("Conexión exitosa con ServicioPaciente");
+  }catch(err){
+    mostrarResultado("resultado-config-paciente", { estado: "No se pudo conectar", error: err.message }, true);
+    mostrarToast("Sin conexión con ServicioPaciente", true);
+  }
+}
+
+// Precargar el campo con lo guardado
+document.getElementById("config-base-paciente").value = obtenerBasePaciente();
+
+/* ============================================================
+   NUEVO: BUSCAR PACIENTE POR DNI — GET /pacientes (ServicioPaciente)
+   ============================================================
+   El contrato actual no tiene un filtro por DNI, así que se trae
+   la lista completa y se filtra en el cliente por numero_documento.
+
+   NOTA SOBRE SEGURIDAD: este endpoint hoy exige un token Bearer que
+   solo se genera con el login del PACIENTE (no del doctor), por lo
+   que ServicioDoctor no puede autenticarse ante él. El equipo de
+   ServicioPaciente liberará /pacientes sin token para consumo entre
+   servicios. Mientras tanto, la llamada se hace SIN Authorization;
+   si el servicio sigue exigiendo token, se mostrará el error 401
+   tal cual lo devuelva el servidor.
+   ============================================================ */
+let _cacheTodosPacientes = null;
+let _cacheTodosPacientesTimestamp = 0;
+const CACHE_PACIENTES_MS = 60000; // 1 minuto
+
+async function obtenerListaPacientes(forzarRecarga = false){
+  const ahora = Date.now();
+  if (!forzarRecarga && _cacheTodosPacientes && (ahora - _cacheTodosPacientesTimestamp < CACHE_PACIENTES_MS)){
+    return _cacheTodosPacientes;
+  }
+
+  const base = obtenerBasePaciente();
+  const resp = await fetch(`${base}/pacientes`);
+
+  if (!resp.ok){
+    if (resp.status === 401){
+      throw new Error("El ServicioPaciente todavía exige token para /pacientes. "
+        + "Pide que liberen ese endpoint para consumo entre servicios.");
+    }
+    throw new Error(`No se pudo obtener la lista de pacientes (HTTP ${resp.status})`);
+  }
+
+  const data = await resp.json();
+  _cacheTodosPacientes = data;
+  _cacheTodosPacientesTimestamp = ahora;
+  return data;
+}
+
+// Vincula el botón "Buscar" de cada widget .buscador-dni con su formulario
+function inicializarBuscadoresDNI(){
+  document.querySelectorAll(".buscador-dni").forEach(widget => {
+    const nombreForm   = widget.dataset.form;
+    const form         = document.getElementById(nombreForm);
+    const inputDni     = widget.querySelector(".input-dni");
+    const botonBuscar  = widget.querySelector(".btn-buscar-dni");
+    const cajaResultado= widget.querySelector(".paciente-encontrado");
+
+    async function buscar(){
+      const dni = inputDni.value.trim();
+      if (!dni){
+        mostrarToast("Ingresa un número de documento", true);
+        return;
+      }
+
+      botonBuscar.disabled = true;
+      botonBuscar.textContent = "Buscando...";
+
+      try{
+        const pacientes = await obtenerListaPacientes();
+        const encontrado = pacientes.find(p => p.numero_documento === dni);
+
+        if (!encontrado){
+          cajaResultado.className = "paciente-encontrado error";
+          cajaResultado.style.display = "block";
+          cajaResultado.innerHTML = `No se encontró ningún paciente con DNI ${dni}.`;
+
+          if (form && form.paciente_id) form.paciente_id.value = "";
+        }else{
+          cajaResultado.className = "paciente-encontrado ok";
+          cajaResultado.style.display = "block";
+          cajaResultado.innerHTML = `
+            <div class="pe-nombre">${encontrado.nombres} ${encontrado.apellidos}</div>
+            <div class="pe-meta">ID interno: ${encontrado.id} · ${encontrado.tipo_documento} ${encontrado.numero_documento}</div>
+          `;
+
+          // Autocompletar el paciente_id (oculto/readonly) del formulario
+          if (form && form.paciente_id) form.paciente_id.value = encontrado.id;
+        }
+      }catch(err){
+        cajaResultado.className = "paciente-encontrado error";
+        cajaResultado.style.display = "block";
+        cajaResultado.textContent = err.message;
+      }finally{
+        botonBuscar.disabled = false;
+        botonBuscar.textContent = "Buscar";
+      }
+    }
+
+    botonBuscar.addEventListener("click", buscar);
+    inputDni.addEventListener("keydown", (e) => {
+      if (e.key === "Enter"){ e.preventDefault(); buscar(); }
+    });
+  });
+}
+
+/* ============================================================
    INICIO: ¿hay sesión guardada?
    ============================================================ */
+llenarSelectsCIE10();
+inicializarBuscadoresDNI();
+
 if (obtenerToken() && obtenerDoctor()){
   mostrarPanel();
 }else{
