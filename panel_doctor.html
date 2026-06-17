@@ -1136,6 +1136,7 @@ function irASeccionAtencion(nombreVista){
   // NUEVO: si vamos a Receta, autocompletar el ID de la última orden creada
   if (nombreVista === "receta" && form && form.orden_medica_id){
     const ultimaOrden = localStorage.getItem("ecosalud_ultima_orden_id");
+    console.log("[DEBUG] Entrando a Receta, ultimaOrden =", ultimaOrden, "| form encontrado:", !!form, "| campo encontrado:", !!form.orden_medica_id);
     if (ultimaOrden) form.orden_medica_id.value = ultimaOrden;
   }
 }
@@ -1336,7 +1337,9 @@ document.getElementById("form-orden").addEventListener("submit", async (e) => {
 
     // NUEVO: guarda el ID de la orden recién creada para autocompletarlo
     // en el formulario de Receta (campo "Orden médica ID")
+    console.log("[DEBUG] Orden creada, data.id =", data.id);
     localStorage.setItem("ecosalud_ultima_orden_id", data.id);
+    console.log("[DEBUG] Guardado en localStorage:", localStorage.getItem("ecosalud_ultima_orden_id"));
 
     // Limpia el formulario pero conserva el paciente en atención
     form.tipo_orden.value = "LABORATORIO";
