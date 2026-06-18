@@ -343,6 +343,7 @@
   }
   .metodo-GET{ background:var(--primary-soft); color:var(--primary-dark); }
   .metodo-POST{ background:#fef3c7; color:#92400e; }
+  .metodo-PUT{ background:#ede9fe; color:#5b21b6; }
 
   /* NUEVO: botones de acción dentro de tablas (más compactos) */
   .tabla-pacientes button{
@@ -678,79 +679,82 @@
     <!-- ── Consultar paciente ── -->
     <section id="seccion-consulta" class="seccion" style="display:none;">
       <h2>Consultar paciente</h2>
-      <p class="subtitulo">GET /doctor/consulta-paciente</p>
+      <p class="subtitulo">Busca por DNI → datos del paciente + historial clínico (ServicioPaciente)</p>
       <div class="card">
-        <form id="form-consulta">
-          <!-- NUEVO: Buscar paciente por DNI -->
-          <div class="buscador-dni" data-form="form-consulta">
-            <label>Buscar paciente por DNI</label>
-            <div class="fila">
-              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
-              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
-            </div>
-            <div class="paciente-encontrado" style="display:none;"></div>
-          </div>
-
-          <label>Paciente ID</label>
-          <input type="number" name="paciente_id" required readonly />
-          <button type="submit" class="btn-primary">Consultar</button>
-        </form>
-        <div class="resultado" id="resultado-consulta"></div>
+        <label>Buscar paciente por DNI</label>
+        <div class="fila" style="margin-bottom:0;">
+          <div><input type="text" id="consulta-dni" placeholder="Ej: 12345678" /></div>
+          <button type="button" class="btn-primary" onclick="buscarPacienteConsulta()">Buscar</button>
+        </div>
       </div>
+
+      <!-- Ficha del paciente (aparece tras la búsqueda) -->
+      <div id="ficha-paciente" style="display:none;">
+        <div class="card">
+          <h3>Datos del paciente</h3>
+          <div id="ficha-datos"></div>
+        </div>
+        <div class="card">
+          <h3>Historial clínico <span class="badge" id="badge-historial">0</span></h3>
+          <div id="ficha-historial"></div>
+        </div>
+        <div class="card">
+          <h3>Órdenes médicas <span class="badge" id="badge-ordenes-pac">0</span></h3>
+          <div id="ficha-ordenes"></div>
+        </div>
+      </div>
+      <div class="resultado" id="resultado-consulta"></div>
     </section>
 
     <!-- ── Recetas de paciente ── -->
     <section id="seccion-recetas-paciente" class="seccion" style="display:none;">
-      <h2>Recetas de un paciente</h2>
-      <p class="subtitulo">GET /doctor/recetas-paciente</p>
+      <h2>Recetas del paciente</h2>
+      <p class="subtitulo">Busca por DNI → recetas del paciente (ServicioPaciente)</p>
       <div class="card">
-        <form id="form-recetas-paciente">
-          <!-- NUEVO: Buscar paciente por DNI -->
-          <div class="buscador-dni" data-form="form-recetas-paciente">
-            <label>Buscar paciente por DNI</label>
-            <div class="fila">
-              <div><input type="text" class="input-dni" placeholder="Ej: 12345678" /></div>
-              <button type="button" class="btn-secundario btn-buscar-dni">Buscar</button>
-            </div>
-            <div class="paciente-encontrado" style="display:none;"></div>
-          </div>
-
-          <div class="fila">
-            <div>
-              <label>Paciente ID</label>
-              <input type="number" name="paciente_id" required readonly />
-            </div>
-            <div>
-              <label>Estado (opcional)</label>
-              <select name="estado">
-                <option value="">Todos</option>
-                <option value="VIGENTE">VIGENTE</option>
-                <option value="ENTREGADO">ENTREGADO</option>
-                <option value="CADUCADO">CADUCADO</option>
-              </select>
-            </div>
-          </div>
-          <button type="submit" class="btn-primary">Buscar recetas</button>
-        </form>
-        <div class="resultado" id="resultado-recetas-paciente"></div>
+        <label>Buscar paciente por DNI</label>
+        <div class="fila" style="margin-bottom:0;">
+          <div><input type="text" id="recetas-pac-dni" placeholder="Ej: 12345678" /></div>
+          <button type="button" class="btn-primary" onclick="buscarRecetasPaciente()">Buscar</button>
+        </div>
       </div>
+
+      <!-- Ficha del paciente + recetas (aparece tras la búsqueda) -->
+      <div id="ficha-recetas-pac" style="display:none;">
+        <div class="card">
+          <h3>Paciente</h3>
+          <div id="ficha-recetas-pac-datos"></div>
+        </div>
+        <div class="card">
+          <h3>Recetas <span class="badge" id="badge-recetas-pac">0</span></h3>
+          <div id="ficha-recetas-contenido"></div>
+        </div>
+      </div>
+      <div class="resultado" id="resultado-recetas-paciente"></div>
     </section>
 
-    <!-- ── NUEVO: Ver citas (consume el contrato de ServicioClinicas) ── -->
+    <!-- ── Ver citas (citas del doctor logueado vía ServicioClinicas) ── -->
     <section id="seccion-citas" class="seccion" style="display:none;">
-      <h2>Consultar citas</h2>
-      <p class="subtitulo">GET /clinica/citas/{fecha} — Contrato del ServicioClinicas (no usa el token de este servicio)</p>
+      <h2>Mis citas</h2>
+      <p class="subtitulo">GET /clinica/citas/doctor/{doctor_id} — Solo las citas del doctor autenticado</p>
       <div class="card">
-        <form id="form-citas">
-          <label>Fecha</label>
-          <input type="date" name="fecha" required />
-          <button type="submit" class="btn-primary">Buscar citas</button>
-        </form>
-        <div id="citas-resultado-area" style="display:none; margin-top:14px;">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+          <button type="button" class="btn-primary" onclick="cargarCitasDoctor()">Cargar mis citas</button>
+          <div style="flex:1; min-width:160px;">
+            <select id="filtro-estado-cita" style="margin-bottom:0;">
+              <option value="">Todos los estados</option>
+              <option value="AGENDADA">AGENDADA</option>
+              <option value="CONFIRMADA">CONFIRMADA</option>
+              <option value="ATENDIDA">ATENDIDA</option>
+              <option value="CANCELADA">CANCELADA</option>
+              <option value="NO_ASISTIO">NO_ASISTIO</option>
+            </select>
+          </div>
+        </div>
+        <div id="citas-resultado-area" style="display:none; margin-top:14px; overflow-x:auto;">
           <table class="tabla-pacientes">
             <thead>
               <tr>
-                <th>ID</th><th>Paciente</th><th>Doctor</th>
+                <th>Cita ID</th><th>Paciente</th>
                 <th>Fecha/Hora</th><th>Duración</th><th>Motivo</th><th>Estado</th><th>Acciones</th>
               </tr>
             </thead>
@@ -816,25 +820,20 @@
           <tbody>
             <tr><td><span class="metodo metodo-POST">POST</span></td><td>/auth/login</td><td>Iniciar sesión del doctor</td><td>—</td><td>ServicioDoctor</td></tr>
             <tr><td><span class="metodo metodo-POST">POST</span></td><td>/auth/registro</td><td>Asignar credenciales a un doctor</td><td>—</td><td>ServicioDoctor</td></tr>
-            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/diagnostico</td><td>Emitir diagnóstico</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/diagnostico</td><td>Emitir diagnóstico (requiere cita previa)</td><td>JWT</td><td>ServicioDoctor</td></tr>
             <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/orden-medica</td><td>Generar orden médica (requiere diagnóstico previo)</td><td>JWT</td><td>ServicioDoctor</td></tr>
             <tr><td><span class="metodo metodo-POST">POST</span></td><td>/doctor/receta</td><td>Emitir receta (requiere diagnóstico previo)</td><td>JWT</td><td>ServicioDoctor</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/{id}/pacientes-atendidos</td><td>Pacientes del doctor</td><td>JWT</td><td>ServicioDoctor</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/consulta-paciente</td><td>Consulta clínica por paciente</td><td>JWT</td><td>ServicioDoctor</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/recetas-paciente</td><td>Recetas de un paciente</td><td>JWT</td><td>ServicioDoctor</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctor/{id}/pacientes-atendidos</td><td>Resumen de actividad del doctor</td><td>JWT</td><td>ServicioDoctor</td></tr>
             <tr><td><span class="metodo metodo-GET">GET</span></td><td>/doctores</td><td>Listar doctores (consumo entre servicios)</td><td>—</td><td>ServicioDoctor</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/clinica/citas/{fecha}</td><td>Citas por fecha</td><td>—</td><td>ServicioClinicas</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/pacientes</td><td>Listar pacientes (usado para buscar por DNI)</td><td id="auth-pacientes-cell">JWT*</td><td>ServicioPaciente</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}</td><td>Detalle de un paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/historial-clinico</td><td>Historial clínico del paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/recetas</td><td>Recetas del paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
-            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/ordenes-medicas</td><td>Órdenes médicas del paciente</td><td>JWT*</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/clinica/citas/doctor/{doctor_id}</td><td>Citas del doctor logueado</td><td>—</td><td>ServicioClinicas</td></tr>
+            <tr><td><span class="metodo metodo-PUT">PUT</span></td><td>/clinica/cita/{id}/estado</td><td>Cambiar estado de cita (ATENDIDA)</td><td>—</td><td>ServicioClinicas</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/pacientes</td><td>Listar pacientes (buscar por DNI)</td><td>—</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}</td><td>Detalle de un paciente</td><td>—</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/historial-clinico</td><td>Historial clínico del paciente</td><td>—</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/recetas</td><td>Recetas del paciente</td><td>—</td><td>ServicioPaciente</td></tr>
+            <tr><td><span class="metodo metodo-GET">GET</span></td><td>/paciente/{id}/ordenes-medicas</td><td>Órdenes médicas del paciente</td><td>—</td><td>ServicioPaciente</td></tr>
           </tbody>
         </table>
-        <p class="subtitulo" style="margin-top:10px; margin-bottom:0;">
-          * En proceso: el equipo de ServicioPaciente está liberando estos endpoints de la
-          exigencia de token para que otros servicios puedan consumirlos directamente.
-        </p>
       </div>
     </section>
 
@@ -1073,17 +1072,23 @@ function irASeccion(nombreVista){
    ============================================================ */
 const CLAVE_ATENCION = "ecosalud_atencion_paciente"; // { id, nombre }
 
-function iniciarAtencion(pacienteId, nombrePaciente){
+function iniciarAtencion(pacienteId, nombrePaciente, citaId){
   localStorage.setItem(CLAVE_ATENCION, JSON.stringify({
     id: pacienteId,
-    nombre: nombrePaciente || null
+    nombre: nombrePaciente || null,
+    citaId: citaId || null
   }));
   actualizarWidgetAtencion();
 }
 
 function finalizarAtencion(){
+  const atencion = obtenerPacienteAtencion();
+  // Marcar la cita como ATENDIDA en ServicioClinicas
+  if (atencion && atencion.citaId){
+    marcarCitaAtendida(atencion.citaId);
+  }
   localStorage.removeItem(CLAVE_ATENCION);
-  localStorage.removeItem("ecosalud_ultima_orden_id"); // NUEVO
+  localStorage.removeItem("ecosalud_ultima_orden_id");
   actualizarWidgetAtencion();
   irASeccion("resumen");
 }
@@ -1136,7 +1141,6 @@ function irASeccionAtencion(nombreVista){
   // NUEVO: si vamos a Receta, autocompletar el ID de la última orden creada
   if (nombreVista === "receta" && form && form.orden_medica_id){
     const ultimaOrden = localStorage.getItem("ecosalud_ultima_orden_id");
-    console.log("[DEBUG] Entrando a Receta, ultimaOrden =", ultimaOrden, "| form encontrado:", !!form, "| campo encontrado:", !!form.orden_medica_id);
     if (ultimaOrden) form.orden_medica_id.value = ultimaOrden;
   }
 }
@@ -1145,9 +1149,9 @@ function irASeccionAtencion(nombreVista){
 // Se llama desde el botón "Diagnóstico" de cada fila en "Ver citas".
 // botonOrigen: el <button> que disparó la acción, usado para leer el
 // nombre del paciente que ya se resolvió en la tabla (data-paciente-nombre).
-function irADiagnosticoDesdeCita(pacienteId, botonOrigen){
+function irADiagnosticoDesdeCita(pacienteId, citaId, botonOrigen){
   const nombre = botonOrigen?.dataset?.pacienteNombre || null;
-  iniciarAtencion(pacienteId, nombre);
+  iniciarAtencion(pacienteId, nombre, citaId);
   irASeccionAtencion("diagnostico");
 
   // Ocultar resultados de un diagnóstico anterior
@@ -1337,9 +1341,7 @@ document.getElementById("form-orden").addEventListener("submit", async (e) => {
 
     // NUEVO: guarda el ID de la orden recién creada para autocompletarlo
     // en el formulario de Receta (campo "Orden médica ID")
-    console.log("[DEBUG] Orden creada, data.id =", data.id);
     localStorage.setItem("ecosalud_ultima_orden_id", data.id);
-    console.log("[DEBUG] Guardado en localStorage:", localStorage.getItem("ecosalud_ultima_orden_id"));
 
     // Limpia el formulario pero conserva el paciente en atención
     form.tipo_orden.value = "LABORATORIO";
@@ -1391,44 +1393,279 @@ document.getElementById("form-receta").addEventListener("submit", async (e) => {
 /* ============================================================
    FORMULARIO: CONSULTAR PACIENTE — GET /doctor/consulta-paciente
    ============================================================ */
-document.getElementById("form-consulta").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const doctor = obtenerDoctor();
-  const form = e.target;
-  const pacienteId = form.paciente_id.value;
+/* ============================================================
+   CONSULTAR PACIENTE — busca por DNI, muestra datos + historial
+   Consume: GET /pacientes, GET /paciente/{id}/historial-clinico,
+            GET /paciente/{id}/ordenes-medicas (ServicioPaciente)
+   ============================================================ */
+function renderFichaPaciente(paciente, contenedorId){
+  const c = document.getElementById(contenedorId);
+  c.innerHTML = `
+    <table class="tabla-pacientes">
+      <tr><th>Nombre</th><td>${paciente.nombres} ${paciente.apellidos}</td></tr>
+      <tr><th>Documento</th><td>${paciente.tipo_documento} ${paciente.numero_documento}</td></tr>
+      <tr><th>Nacimiento</th><td>${paciente.fecha_nacimiento || "—"}</td></tr>
+      <tr><th>Género</th><td>${paciente.genero || "—"}</td></tr>
+      <tr><th>Teléfono</th><td>${paciente.telefono || "—"}</td></tr>
+      <tr><th>Email</th><td>${paciente.email || "—"}</td></tr>
+      <tr><th>Dirección</th><td>${paciente.direccion || "—"}</td></tr>
+      <tr><th>Estado</th><td>${paciente.estado || "—"}</td></tr>
+    </table>`;
+}
+
+async function buscarPacienteConsulta(){
+  const dni = document.getElementById("consulta-dni").value.trim();
+  if (!dni){ mostrarToast("Ingresa un DNI", true); return; }
+
+  const ficha = document.getElementById("ficha-paciente");
+  ficha.style.display = "none";
 
   try{
-    const data = await apiFetch(`/doctor/consulta-paciente?paciente_id=${pacienteId}&doctor_id=${doctor.doctor_id}`);
-    mostrarResultado("resultado-consulta", data);
+    const base = obtenerBasePaciente();
+
+    // 1. Buscar paciente por DNI en la lista
+    const resp = await fetch(`${base}/pacientes`);
+    const pacientes = await resp.json();
+    const paciente = pacientes.find(p => p.numero_documento === dni);
+
+    if (!paciente){
+      mostrarResultado("resultado-consulta", `No se encontró ningún paciente con DNI ${dni}`, true);
+      return;
+    }
+
+    // 2. Mostrar ficha del paciente
+    renderFichaPaciente(paciente, "ficha-datos");
+
+    // 3. Historial clínico
+    const respH = await fetch(`${base}/paciente/${paciente.id}/historial-clinico`);
+    const historial = await respH.json();
+    document.getElementById("badge-historial").textContent = historial.length || 0;
+    if (!historial.length){
+      document.getElementById("ficha-historial").innerHTML = '<p class="vacio">Sin historial registrado.</p>';
+    }else{
+      document.getElementById("ficha-historial").innerHTML = `
+        <table class="tabla-pacientes">
+          <thead><tr><th>Tipo</th><th>Título</th><th>Fecha</th><th>Médico</th></tr></thead>
+          <tbody>${historial.map(h => `
+            <tr>
+              <td>${h.tipo_registro || "—"}</td>
+              <td>${h.titulo}</td>
+              <td>${h.fecha_evento}</td>
+              <td>${h.medico_responsable || "—"}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    // 4. Órdenes médicas
+    const respO = await fetch(`${base}/paciente/${paciente.id}/ordenes-medicas`);
+    const ordenes = await respO.json();
+    document.getElementById("badge-ordenes-pac").textContent = ordenes.length || 0;
+    if (!ordenes.length){
+      document.getElementById("ficha-ordenes").innerHTML = '<p class="vacio">Sin órdenes médicas.</p>';
+    }else{
+      document.getElementById("ficha-ordenes").innerHTML = `
+        <table class="tabla-pacientes">
+          <thead><tr><th>ID</th><th>Tipo</th><th>Detalle</th><th>Estado</th><th>Vence</th></tr></thead>
+          <tbody>${ordenes.map(o => `
+            <tr>
+              <td>${o.id}</td>
+              <td>${o.tipo_orden || "—"}</td>
+              <td>${o.detalle || "—"}</td>
+              <td>${o.estado}</td>
+              <td>${o.fecha_vencimiento || "—"}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    document.getElementById("resultado-consulta").classList.remove("visible");
+    ficha.style.display = "block";
+    mostrarToast(`Paciente encontrado: ${paciente.nombres} ${paciente.apellidos}`);
+
   }catch(err){
     mostrarResultado("resultado-consulta", err.message, true);
   }
-});
+}
 
 /* ============================================================
-   FORMULARIO: RECETAS DE PACIENTE — GET /doctor/recetas-paciente
+   RECETAS DEL PACIENTE — busca por DNI, muestra recetas
+   Consume: GET /pacientes, GET /paciente/{id}/recetas (ServicioPaciente)
    ============================================================ */
-document.getElementById("form-recetas-paciente").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const doctor = obtenerDoctor();
-  const form = e.target;
-  const pacienteId = form.paciente_id.value;
-  const estado = form.estado.value;
+async function buscarRecetasPaciente(){
+  const dni = document.getElementById("recetas-pac-dni").value.trim();
+  if (!dni){ mostrarToast("Ingresa un DNI", true); return; }
 
-  let ruta = `/doctor/recetas-paciente?paciente_id=${pacienteId}&doctor_id=${doctor.doctor_id}`;
-  if (estado) ruta += `&estado=${estado}`;
+  const ficha = document.getElementById("ficha-recetas-pac");
+  ficha.style.display = "none";
 
   try{
-    const data = await apiFetch(ruta);
-    mostrarResultado("resultado-recetas-paciente", data);
+    const base = obtenerBasePaciente();
+
+    // 1. Buscar paciente por DNI
+    const resp = await fetch(`${base}/pacientes`);
+    const pacientes = await resp.json();
+    const paciente = pacientes.find(p => p.numero_documento === dni);
+
+    if (!paciente){
+      mostrarResultado("resultado-recetas-paciente", `No se encontró ningún paciente con DNI ${dni}`, true);
+      return;
+    }
+
+    // 2. Ficha del paciente (compacta)
+    document.getElementById("ficha-recetas-pac-datos").innerHTML = `
+      <p style="margin:0; font-weight:600;">${paciente.nombres} ${paciente.apellidos}</p>
+      <p style="margin:4px 0 0; font-size:12px; color:var(--ink-soft);">
+        ${paciente.tipo_documento} ${paciente.numero_documento} · ID: ${paciente.id}
+      </p>`;
+
+    // 3. Recetas
+    const respR = await fetch(`${base}/paciente/${paciente.id}/recetas`);
+    const recetas = await respR.json();
+    document.getElementById("badge-recetas-pac").textContent = recetas.length || 0;
+
+    if (!recetas.length){
+      document.getElementById("ficha-recetas-contenido").innerHTML = '<p class="vacio">Sin recetas registradas.</p>';
+    }else{
+      document.getElementById("ficha-recetas-contenido").innerHTML = `
+        <table class="tabla-pacientes">
+          <thead><tr><th>ID</th><th>Medicamento</th><th>Dosis</th><th>Duración</th><th>Estado</th><th>Emitida</th></tr></thead>
+          <tbody>${recetas.map(r => `
+            <tr>
+              <td>${r.id}</td>
+              <td>${r.medicamento}</td>
+              <td>${r.dosis || "—"}</td>
+              <td>${r.duracion || "—"}</td>
+              <td>${r.estado}</td>
+              <td>${r.fecha_emision || "—"}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>`;
+    }
+
+    document.getElementById("resultado-recetas-paciente").classList.remove("visible");
+    ficha.style.display = "block";
+    mostrarToast(`${recetas.length || 0} receta(s) encontradas`);
+
   }catch(err){
     mostrarResultado("resultado-recetas-paciente", err.message, true);
   }
-});
+}
 
 /* ============================================================
-   NUEVO: TOAST DE NOTIFICACIÓN
+   VER CITAS — GET /clinica/citas/doctor/{doctor_id}
+   Solo las citas del doctor logueado. Sin filtro de fecha.
+   Al finalizar la atención → PUT /clinica/cita/{id}/estado?nuevo_estado=ATENDIDA
    ============================================================ */
+function estadoBadgeCita(estado){
+  if (!estado) return "—";
+  return `<span class="estado-badge estado-${estado}">${estado}</span>`;
+}
+
+async function resolverNombrePaciente(pacienteId){
+  try{
+    const pacientes = await obtenerListaPacientes();
+    const encontrado = pacientes.find(p => p.id === pacienteId);
+    return encontrado ? `${encontrado.nombres} ${encontrado.apellidos}` : null;
+  }catch(err){
+    return null;
+  }
+}
+
+async function cargarCitasDoctor(){
+  const doctor = obtenerDoctor();
+  if (!doctor) return;
+
+  const base = obtenerBaseCitas();
+  const areaResultado = document.getElementById("citas-resultado-area");
+  const tbody = document.getElementById("citas-tbody");
+  const filtroEstado = document.getElementById("filtro-estado-cita").value;
+
+  areaResultado.style.display = "none";
+  tbody.innerHTML = `<tr><td colspan="7" class="vacio">Cargando citas...</td></tr>`;
+  areaResultado.style.display = "block";
+
+  try{
+    // Consume el endpoint de citas por doctor del ServicioClinicas (sin token)
+    const resp = await fetch(`${base}/clinica/citas/doctor/${doctor.doctor_id}`);
+    let data = await resp.json();
+
+    if (!resp.ok){
+      throw new Error(data.detail ? JSON.stringify(data.detail) : `Error HTTP ${resp.status}`);
+    }
+
+    // Filtrar por estado si hay uno seleccionado
+    if (filtroEstado){
+      data = data.filter(c => c.estado === filtroEstado);
+    }
+
+    if (!data || data.length === 0){
+      tbody.innerHTML = `<tr><td colspan="7" class="vacio">No hay citas${filtroEstado ? ' con estado ' + filtroEstado : ''}.</td></tr>`;
+    }else{
+      // Renderiza con ID como placeholder mientras llega el nombre
+      tbody.innerHTML = data.map(c => `
+        <tr data-cita-id="${c.id}">
+          <td>${c.id}</td>
+          <td class="celda-paciente">Paciente #${c.paciente_id}</td>
+          <td>${new Date(c.fecha_hora).toLocaleString()}</td>
+          <td>${c.duracion_minutos} min</td>
+          <td>${c.motivo || "—"}</td>
+          <td class="celda-estado-${c.id}">${estadoBadgeCita(c.estado)}</td>
+          <td>
+            <button type="button" class="btn-secundario"
+              onclick="irADiagnosticoDesdeCita(${c.paciente_id}, ${c.id}, this)">
+              Diagnóstico
+            </button>
+          </td>
+        </tr>
+      `).join("");
+
+      // Resuelve nombre del paciente en segundo plano
+      data.forEach(async (c) => {
+        const nombre = await resolverNombrePaciente(c.paciente_id);
+        if (nombre){
+          const celda = tbody.querySelector(`tr[data-cita-id="${c.id}"] .celda-paciente`);
+          if (celda) celda.textContent = nombre;
+          const boton = tbody.querySelector(`tr[data-cita-id="${c.id}"] button`);
+          if (boton) boton.dataset.pacienteNombre = nombre;
+        }
+      });
+    }
+
+    mostrarToast(`${data.length || 0} cita(s) encontradas`);
+
+  }catch(err){
+    tbody.innerHTML = `<tr><td colspan="7" class="vacio">${err.message}</td></tr>`;
+    mostrarToast("Error al cargar citas", true);
+  }
+}
+
+// Actualizar estado de la cita a ATENDIDA al finalizar la atención
+async function marcarCitaAtendida(citaId){
+  if (!citaId) return;
+
+  const base = obtenerBaseCitas();
+  try{
+    const resp = await fetch(
+      `${base}/clinica/cita/${citaId}/estado?nuevo_estado=ATENDIDA`,
+      { method: "PUT" }
+    );
+
+    if (resp.ok){
+      // Actualizar el badge de estado en la tabla sin recargar
+      const celdaEstado = document.querySelector(`.celda-estado-${citaId}`);
+      if (celdaEstado) celdaEstado.innerHTML = estadoBadgeCita("ATENDIDA");
+      mostrarToast("Cita marcada como ATENDIDA");
+    }else{
+      const err = await resp.json().catch(() => ({}));
+      mostrarToast(`No se pudo actualizar el estado: ${err.detail || resp.status}`, true);
+    }
+  }catch(err){
+    mostrarToast(`Error al actualizar la cita: ${err.message}`, true);
+  }
+}
+
+
 function mostrarToast(mensaje, esError = false){
   const toast = document.getElementById("toast");
   toast.textContent = mensaje;
@@ -1500,94 +1737,7 @@ async function probarConexionDoctor(){
 document.getElementById("config-base-doctor").value = obtenerBaseDoctorUrl();
 document.getElementById("config-base-citas").value = obtenerBaseCitas();
 
-/* ============================================================
-   NUEVO: VER CITAS — GET /clinica/citas/{fecha}
-   Este endpoint pertenece a OTRO microservicio (ServicioClinicas)
-   y NO requiere el token JWT de ServicioDoctor
-   ============================================================ */
-function estadoBadgeCita(estado){
-  if (!estado) return "—";
-  return `<span class="estado-badge estado-${estado}">${estado}</span>`;
-}
 
-// NUEVO: busca el nombre completo de un paciente por su ID, usando la
-// misma lista cacheada de obtenerListaPacientes(). Si el ServicioPaciente
-// todavía exige token (401) u otro error, devuelve null silenciosamente
-// y la tabla muestra el ID como respaldo.
-async function resolverNombrePaciente(pacienteId){
-  try{
-    const pacientes = await obtenerListaPacientes();
-    const encontrado = pacientes.find(p => p.id === pacienteId);
-    return encontrado ? `${encontrado.nombres} ${encontrado.apellidos}` : null;
-  }catch(err){
-    return null;
-  }
-}
-
-document.getElementById("form-citas").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const fecha = e.target.fecha.value;
-  const base  = obtenerBaseCitas();
-
-  const areaResultado = document.getElementById("citas-resultado-area");
-  const tbody = document.getElementById("citas-tbody");
-  areaResultado.style.display = "none";
-
-  try{
-    // Llamada SIN Authorization: es el contrato de otro servicio
-    const resp = await fetch(`${base}/clinica/citas/${fecha}`);
-    const data = await resp.json();
-
-    if (!resp.ok){
-      throw new Error(data.detail ? JSON.stringify(data.detail) : `Error HTTP ${resp.status}`);
-    }
-
-    if (!data || data.length === 0){
-      tbody.innerHTML = `<tr><td colspan="8" class="vacio">No existen citas para la fecha seleccionada.</td></tr>`;
-    }else{
-      // Pinta la tabla primero con el ID (respuesta inmediata)...
-      tbody.innerHTML = data.map(c => `
-        <tr data-cita-id="${c.id}">
-          <td>${c.id}</td>
-          <td class="celda-paciente">Paciente #${c.paciente_id}</td>
-          <td>${c.doctor_id}</td>
-          <td>${new Date(c.fecha_hora).toLocaleString()}</td>
-          <td>${c.duracion_minutos} min</td>
-          <td>${c.motivo || "—"}</td>
-          <td>${estadoBadgeCita(c.estado)}</td>
-          <td>
-            <button type="button" class="btn-secundario"
-              onclick="irADiagnosticoDesdeCita(${c.paciente_id}, this)">
-              Diagnóstico
-            </button>
-          </td>
-        </tr>
-      `).join("");
-
-      // ...y luego reemplaza cada celda con el nombre real en cuanto llega
-      // (no bloquea el render de la tabla mientras se resuelve cada nombre)
-      data.forEach(async (c) => {
-        const nombre = await resolverNombrePaciente(c.paciente_id);
-        if (nombre){
-          const fila = tbody.querySelector(`tr[data-cita-id="${c.id}"] .celda-paciente`);
-          if (fila) fila.textContent = nombre;
-
-          // Guarda el nombre en el botón para usarlo al ir a Diagnóstico
-          const boton = tbody.querySelector(`tr[data-cita-id="${c.id}"] button`);
-          if (boton) boton.dataset.pacienteNombre = nombre;
-        }
-      });
-    }
-
-    areaResultado.style.display = "block";
-    mostrarResultado("resultado-citas", { total_citas: data.length || 0 });
-    mostrarToast(`${data.length || 0} cita(s) encontradas`);
-
-  }catch(err){
-    mostrarResultado("resultado-citas", err.message, true);
-    mostrarToast("Error al consultar citas", true);
-  }
-});
 
 /* ============================================================
    NUEVO: CONFIGURACIÓN — URL del ServicioPaciente
