@@ -103,7 +103,7 @@ def verificar_token(token: str) -> dict:
 
 
 # ── DEPENDENCIA: Obtener el doctor actual desde el token ──────────────────────
-def get_doctor_actual(token: str = Depends(oauth2_scheme)) -> dict:
+#def get_doctor_actual(token: str = Depends(oauth2_scheme)) -> dict:
     """
     Dependencia de FastAPI que extrae el doctor autenticado del token JWT.
 
