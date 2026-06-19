@@ -731,10 +731,10 @@
       <p class="subtitulo">Busca por DNI → recetas del paciente (ServicioPaciente)</p>
       <div class="card">
         <label>Buscar paciente por DNI</label>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <input type="text" id="recetas-pac-dni" placeholder="Ej: 12345678";"
-            onkeydown="if(event.key==='Enter') buscarRecetasPaciente()" style="width: 250px; min-width: 250px;"/>
-          <button type="button" class="btn-primary" onclick="buscarRecetasPaciente()" style="width: 120px;">Buscar</button>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:0;">
+          <input type="text" id="recetas-pac-dni" placeholder="Ej: 12345678" style="flex:1; margin-bottom:0;"
+            onkeydown="if(event.key==='Enter') buscarRecetasPaciente()" />
+          <button type="button" class="btn-primary" style="flex-shrink:0;" onclick="buscarRecetasPaciente()">Buscar</button>
         </div>
       </div>
 
