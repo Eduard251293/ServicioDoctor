@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+#from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
 import os
 
@@ -29,7 +29,7 @@ EXPIRE_MINUTES  = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
 # tokenUrl="/auth/login" → apunta al endpoint de login que crearemos
 # Cuando un endpoint use Depends(oauth2_scheme), FastAPI extrae
 # automáticamente el token del header: Authorization: Bearer <token>
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+#oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 # ── FUNCIÓN: Crear un token JWT ───────────────────────────────────────────────
