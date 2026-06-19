@@ -104,18 +104,18 @@ def verificar_token(token: str) -> dict:
 
 # ── DEPENDENCIA: Obtener el doctor actual desde el token ──────────────────────
 #def get_doctor_actual(token: str = Depends(oauth2_scheme)) -> dict:
-    """
-    Dependencia de FastAPI que extrae el doctor autenticado del token JWT.
+  #  """
+#    Dependencia de FastAPI que extrae el doctor autenticado del token JWT.
 
-    Cómo usarla en un endpoint:
-        @router.get("/mi-endpoint")
-        def mi_endpoint(doctor = Depends(get_doctor_actual)):
+#    Cómo usarla en un endpoint:
+#        @router.get("/mi-endpoint")
+#        def mi_endpoint(doctor = Depends(get_doctor_actual)):
             # doctor tiene: sub, doctor_id, nombre, especialidad
-            return {"mensaje": f"Hola Dr. {doctor['nombre']}"}
+#            return {"mensaje": f"Hola Dr. {doctor['nombre']}"}
 
-    Si el token no es válido o no existe, FastAPI responde automáticamente
-    con HTTP 401 antes de ejecutar el endpoint.
-    """
+#    Si el token no es válido o no existe, FastAPI responde automáticamente
+ #   con HTTP 401 antes de ejecutar el endpoint.
+ #   """
     # verificar_token ya lanza HTTPException si algo falla
-    payload = verificar_token(token)
-    return payload
+#    payload = verificar_token(token)
+#    return payload
