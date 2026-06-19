@@ -278,6 +278,24 @@
     margin-top:14px;
     display:none;
   }
+  /* Resultado con contenido HTML rico (orden médica) */
+  .resultado.html-rico{
+    background:var(--surface);
+    color:var(--ink);
+    font-family:var(--font-body);
+    border:1px solid var(--border);
+    white-space:normal;
+  }
+  .resultado.html-rico pre{
+    font-family:var(--font-mono);
+    font-size:12px;
+    background:#0f2a28;
+    color:#d6f3ef;
+    border-radius:6px;
+    padding:10px;
+    overflow:auto;
+    white-space:pre-wrap;
+  }
   .resultado.visible{ display:block; }
   .resultado.error{ background:var(--danger-soft); color:var(--danger); }
 
@@ -682,9 +700,10 @@
       <p class="subtitulo">Busca por DNI → datos del paciente + historial clínico (ServicioPaciente)</p>
       <div class="card">
         <label>Buscar paciente por DNI</label>
-        <div class="fila" style="margin-bottom:0;">
-          <div><input type="text" id="consulta-dni" placeholder="Ej: 12345678" /></div>
-          <button type="button" class="btn-primary" onclick="buscarPacienteConsulta()">Buscar</button>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:0;">
+          <input type="text" id="consulta-dni" placeholder="Ej: 12345678" style="flex:1; margin-bottom:0;"
+            onkeydown="if(event.key==='Enter') buscarPacienteConsulta()" />
+          <button type="button" class="btn-primary" style="flex-shrink:0;" onclick="buscarPacienteConsulta()">Buscar</button>
         </div>
       </div>
 
@@ -712,9 +731,10 @@
       <p class="subtitulo">Busca por DNI → recetas del paciente (ServicioPaciente)</p>
       <div class="card">
         <label>Buscar paciente por DNI</label>
-        <div class="fila" style="margin-bottom:0;">
-          <div><input type="text" id="recetas-pac-dni" placeholder="Ej: 12345678" /></div>
-          <button type="button" class="btn-primary" onclick="buscarRecetasPaciente()">Buscar</button>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:0;">
+          <input type="text" id="recetas-pac-dni" placeholder="Ej: 12345678" style="flex:1; margin-bottom:0;"
+            onkeydown="if(event.key==='Enter') buscarRecetasPaciente()" />
+          <button type="button" class="btn-primary" style="flex-shrink:0;" onclick="buscarRecetasPaciente()">Buscar</button>
         </div>
       </div>
 
@@ -1337,11 +1357,26 @@ document.getElementById("form-orden").addEventListener("submit", async (e) => {
       method: "POST",
       body: JSON.stringify(body)
     });
-    mostrarResultado("resultado-orden", data);
 
-    // NUEVO: guarda el ID de la orden recién creada para autocompletarlo
-    // en el formulario de Receta (campo "Orden médica ID")
+    // NUEVO: guarda el ID de la orden recién creada para autocompletarlo en Receta
     localStorage.setItem("ecosalud_ultima_orden_id", data.id);
+
+    // Mostrar el resultado con el ID de la orden resaltado
+    const box = document.getElementById("resultado-orden");
+    box.innerHTML = `
+      <div style="margin-bottom:10px; padding:10px 14px; background:var(--primary-soft);
+                  border-radius:8px; display:flex; align-items:center; gap:12px;">
+        <span style="font-size:22px;">✅</span>
+        <div>
+          <div style="font-weight:600; color:var(--primary-dark);">Orden médica registrada</div>
+          <div style="font-size:13px; color:var(--ink-soft);">
+            ID de la orden: <strong style="color:var(--ink); font-family:var(--font-mono);">#${data.id}</strong>
+            — Este ID se autocompleta en el formulario de Receta
+          </div>
+        </div>
+      </div>
+      <pre style="font-size:12px; margin:0;">${JSON.stringify(data, null, 2)}</pre>`;
+    box.classList.add("visible", "html-rico");
 
     // Limpia el formulario pero conserva el paciente en atención
     form.tipo_orden.value = "LABORATORIO";
@@ -1599,26 +1634,37 @@ async function cargarCitasDoctor(){
       data = data.filter(c => c.estado === filtroEstado);
     }
 
+    // NUEVO: ordenar — primero AGENDADA/CONFIRMADA, al final ATENDIDA/CANCELADA/NO_ASISTIO
+    const ORDEN_ESTADO = { "AGENDADA": 0, "CONFIRMADA": 1, "EN_PROCESO": 2, "ATENDIDA": 3, "CANCELADA": 4, "NO_ASISTIO": 5 };
+    data.sort((a, b) => {
+      const oa = ORDEN_ESTADO[a.estado] ?? 99;
+      const ob = ORDEN_ESTADO[b.estado] ?? 99;
+      if (oa !== ob) return oa - ob;
+      return new Date(a.fecha_hora) - new Date(b.fecha_hora);
+    });
+
     if (!data || data.length === 0){
       tbody.innerHTML = `<tr><td colspan="7" class="vacio">No hay citas${filtroEstado ? ' con estado ' + filtroEstado : ''}.</td></tr>`;
     }else{
-      // Renderiza con ID como placeholder mientras llega el nombre
-      tbody.innerHTML = data.map(c => `
-        <tr data-cita-id="${c.id}">
+      tbody.innerHTML = data.map(c => {
+        const yaAtendida = c.estado === "ATENDIDA" || c.estado === "CANCELADA" || c.estado === "NO_ASISTIO";
+        const btnDiag = yaAtendida
+          ? `<button type="button" class="btn-secundario" disabled style="opacity:.4; cursor:not-allowed;">Atendida</button>`
+          : `<button type="button" class="btn-secundario"
+               onclick="irADiagnosticoDesdeCita(${c.paciente_id}, ${c.id}, this)">
+               Diagnóstico
+             </button>`;
+        return `
+        <tr data-cita-id="${c.id}" style="${yaAtendida ? 'opacity:.65;' : ''}">
           <td>${c.id}</td>
           <td class="celda-paciente">Paciente #${c.paciente_id}</td>
           <td>${new Date(c.fecha_hora).toLocaleString()}</td>
           <td>${c.duracion_minutos} min</td>
           <td>${c.motivo || "—"}</td>
           <td class="celda-estado-${c.id}">${estadoBadgeCita(c.estado)}</td>
-          <td>
-            <button type="button" class="btn-secundario"
-              onclick="irADiagnosticoDesdeCita(${c.paciente_id}, ${c.id}, this)">
-              Diagnóstico
-            </button>
-          </td>
-        </tr>
-      `).join("");
+          <td>${btnDiag}</td>
+        </tr>`;
+      }).join("");
 
       // Resuelve nombre del paciente en segundo plano
       data.forEach(async (c) => {
@@ -1626,7 +1672,7 @@ async function cargarCitasDoctor(){
         if (nombre){
           const celda = tbody.querySelector(`tr[data-cita-id="${c.id}"] .celda-paciente`);
           if (celda) celda.textContent = nombre;
-          const boton = tbody.querySelector(`tr[data-cita-id="${c.id}"] button`);
+          const boton = tbody.querySelector(`tr[data-cita-id="${c.id}"] button:not([disabled])`);
           if (boton) boton.dataset.pacienteNombre = nombre;
         }
       });
