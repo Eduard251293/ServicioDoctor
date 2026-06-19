@@ -26,6 +26,7 @@ from Endpoints.get_pacientes_atendidos  import router as router_pacientes
 from Endpoints.get_consulta_paciente    import router as router_consulta
 from Endpoints.get_recetas_paciente     import router as router_recetas
 from Endpoints.get_doctores             import router as router_doctores
+from Endpoints.get_recetas_por_paciente import router as router_recetas_paciente_publico
 
 # ── NUEVO: Endpoints de autenticación (login) ─────────────────────────────────
 # post_auth_registro → POST /auth/registro  (admin asigna contraseña a un doctor)
@@ -74,6 +75,7 @@ app.include_router(router_pacientes)    # GET  /doctor/{id}/pacientes-atendidos
 app.include_router(router_consulta)     # GET  /doctor/consulta-paciente
 app.include_router(router_recetas)      # GET  /doctor/recetas-paciente
 app.include_router(router_doctores)     # GET /doctores
+app.include_router(router_recetas_paciente_publico)  # GET /pacientes/{paciente_id}/recetas
 
 # ── NUEVO: Registrar endpoints de autenticación ───────────────────────────────
 app.include_router(router_registro)     # POST /auth/registro
