@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from database import SessionLocal, Base
 
 # ── NUEVO: importar la dependencia que valida el JWT ──────────────────────────
-from auth.jwt_config import get_doctor_actual
+#from auth.jwt_config import get_doctor_actual
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
