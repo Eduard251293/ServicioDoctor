@@ -75,13 +75,13 @@ def get_recetas_paciente(
     estado:      str = None,     # &estado=VIGENTE (opcional)
     db: Session = Depends(get_db),
     # ── NUEVO: exige el JWT y trae los datos del doctor autenticado ───────────
-    doctor_actual: dict = Depends(get_doctor_actual)
+   # doctor_actual: dict = Depends(get_doctor_actual)
 ):
     # ── NUEVO REGLA 0: El doctor del token debe coincidir con doctor_id ───────
-    if doctor_actual["doctor_id"] != doctor_id:
-        raise HTTPException(
+  #  if doctor_actual["doctor_id"] != doctor_id:
+  #      raise HTTPException(
             status_code = 403,
-            detail      = "No puedes consultar recetas usando el ID de otro doctor"
+  #          detail      = "No puedes consultar recetas usando el ID de otro doctor"
         )
 
     # ── REGLA 1: Doctor existe ────────────────────────────────────────────────
