@@ -81,6 +81,27 @@
     margin-top:2px;
   }
 
+  /* ============================================================
+   BUSCADOR DNI
+   ============================================================ */
+.buscador-inline{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.buscador-inline input{
+  flex:1;
+  min-width:220px;
+  margin-bottom:0;
+}
+
+.buscador-inline .btn-primary{
+  width:auto;          /* Anula el width:100% global */
+  min-width:120px;
+  flex-shrink:0;
+}
+
   /* Línea de pulso (ECG) — elemento distintivo */
   .pulso{
     width:100%;
@@ -698,12 +719,12 @@
     <section id="seccion-consulta" class="seccion" style="display:none;">
       <h2>Consultar paciente</h2>
       <p class="subtitulo">Busca por DNI → datos del paciente + historial clínico (ServicioPaciente)</p>
-      <div class="card">
+      <div class="buscador-inline">
         <label>Buscar paciente por DNI</label>
         <div style="display:flex; gap:10px; align-items:center; margin-bottom:0;">
-          <input type="text" id="consulta-dni" placeholder="Ej: 12345678" style="flex:1; margin-bottom:0;"
+          <input type="text" id="consulta-dni" placeholder="Ej: 12345678"
             onkeydown="if(event.key==='Enter') buscarPacienteConsulta()" />
-          <button type="button" class="btn-primary" style="flex-shrink:0;" onclick="buscarPacienteConsulta()">Buscar</button>
+          <button type="button" class="btn-primary" onclick="buscarPacienteConsulta()">Buscar</button>
         </div>
       </div>
 
@@ -729,12 +750,12 @@
     <section id="seccion-recetas-paciente" class="seccion" style="display:none;">
       <h2>Recetas del paciente</h2>
       <p class="subtitulo">Busca por DNI → recetas del paciente (ServicioPaciente)</p>
-      <div class="card">
+      <div class="buscador-inline">
         <label>Buscar paciente por DNI</label>
         <div style="display:flex; gap:10px; align-items:center; margin-bottom:0;">
-          <input type="text" id="recetas-pac-dni" placeholder="Ej: 12345678" style="flex:1; margin-bottom:0;"
+          <input type="text" id="recetas-pac-dni" placeholder="Ej: 12345678"
             onkeydown="if(event.key==='Enter') buscarRecetasPaciente()" />
-          <button type="button" class="btn-primary" style="flex-shrink:0;" onclick="buscarRecetasPaciente()">Buscar</button>
+          <button type="button" class="btn-primary" onclick="buscarRecetasPaciente()">Buscar</button>
         </div>
       </div>
 
