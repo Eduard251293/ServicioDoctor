@@ -80,7 +80,7 @@ def get_recetas_paciente(
     # ── NUEVO REGLA 0: El doctor del token debe coincidir con doctor_id ───────
   #  if doctor_actual["doctor_id"] != doctor_id:
   #      raise HTTPException(
-            status_code = 403,
+  #          status_code = 403,
   #          detail      = "No puedes consultar recetas usando el ID de otro doctor"
         )
 
