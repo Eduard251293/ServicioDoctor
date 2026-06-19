@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 from database import SessionLocal, Base
 
 # ── NUEVO: importar la dependencia que valida el JWT ──────────────────────────
-from auth.jwt_config import get_doctor_actual
+#from auth.jwt_config import get_doctor_actual
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -75,14 +75,14 @@ def get_recetas_paciente(
     estado:      str = None,     # &estado=VIGENTE (opcional)
     db: Session = Depends(get_db),
     # ── NUEVO: exige el JWT y trae los datos del doctor autenticado ───────────
-    doctor_actual: dict = Depends(get_doctor_actual)
+    #doctor_actual: dict = Depends(get_doctor_actual)
 ):
     # ── NUEVO REGLA 0: El doctor del token debe coincidir con doctor_id ───────
-    if doctor_actual["doctor_id"] != doctor_id:
-        raise HTTPException(
-            status_code = 403,
-            detail      = "No puedes consultar recetas usando el ID de otro doctor"
-        )
+    #if doctor_actual["doctor_id"] != doctor_id:
+     #   raise HTTPException(
+      #      status_code = 403,
+       #     detail      = "No puedes consultar recetas usando el ID de otro doctor"
+        #)
 
     # ── REGLA 1: Doctor existe ────────────────────────────────────────────────
     doctor = db.query(Doctor).filter(Doctor.id == doctor_id).first()
